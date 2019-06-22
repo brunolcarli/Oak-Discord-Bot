@@ -79,3 +79,22 @@ async def ability(ctx, ability):
 async def frase_do_sidney(ctx):
     options = ['VAI SER EMOCIONANTE!', 'manicaca']
     await ctx.send(choice(options))
+
+@client.command()
+async def quote(ctx, *phrase):
+    '''
+    Salva uma mensagem como quote para ser eternamente lembrado
+    '''
+    quoted = ' '.join(word for word in phrase)
+    with open('files/quotes.txt', 'a') as f:
+        f.writelines(quoted + '\n')
+    await ctx.send(quoted)
+
+@client.command()
+async def random_quote(ctx):
+    '''
+    Retorna um quote aleatório
+    '''
+    with open('files/quotes.txt', 'r') as f:
+        quotes = f.readlines()
+    await ctx.send(choice(quotes))
