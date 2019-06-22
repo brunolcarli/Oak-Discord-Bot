@@ -4,7 +4,7 @@
 
 # ABP Oak Discord Bot
 
-[![Generic badge](https://img.shields.io/badge/docs-blue.svg)](#)
+[![Generic badge](https://img.shields.io/badge/docs-blue.svg)](https://github.com/brunolcarli/Oak-Discord-Bot/wiki)
 
 PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
 
