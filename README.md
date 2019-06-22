@@ -1,0 +1,71 @@
+<table align="center"><tr><td align="center" width="9999">
+
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRejczcPLNHPb4_UAPOEj9jpi3irx7o35Wkk11DQXpOKVI39ENPIg" align="center" width="150" alt="Project icon">
+
+# ABP Oak Discord Bot
+
+[![Generic badge](https://img.shields.io/badge/docs-blue.svg)](#)
+
+PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
+
+</td></tr></table>
+
+# Adicionando o Oak ao seu Servidor
+
+Se você não é desenvolvedor e não quer customizar um bot, mas gostaria de utilziar
+o `Oak` no seu servidor, basta utilizar este link:
+
+https://discordapp.com/api/oauth2/authorize?client_id=590673073087315968&permissions=18432&scope=bot
+
+Isto é um convite para utilziar o `Oak` no seu servidor Discord, basta colar no seu navegador e dar permissão de acesso ao bot para que ele possa participar dos seus canais Discord no servidor de sua preferência.
+
+Veja adocumentação para conhecer os comandos do bot ou apenas execute no chat do discord:
+
+```
+/help
+```
+
+
+# Desenvolvedores
+
+Se você é desenvolvedor e gostaria de customizar o `Oak` com seus próprios
+comandos siga as instruções abaixo para rodar o bot na sua máquina.
+
+# Instalando e rodando
+
+## Dependências mínimas:
+
+```
+Python >=3.4.3 || <=3.6.6
+Conta no Discord
+```
+
+Crie uma aplicação no Discord, você precisará gerar um `token` para utilizar o seu bot nos servidores Discord.
+
+Poderá seguir [este tutoral](https://medium.com/@moomooptas/how-to-make-a-simple-discord-bot-in-python-40ed991468b4) para fazer isto.
+
+Assim que tiver gerado seu `token` e dado acesso ao bot via página do Discord Developers, crie na raiz deste projeto um arquivo chamado `.env` e nele insira seu token desta forma:
+
+
+```
+TOKEN=dgyausgdhuisegfdyuesnciosbedtyfvdsvufsuydtfcgjksgfdytsd
+```
+
+## Rodando Localmente
+
+Crie um ambiente virtual ([virtualenv](https://docs.python-guide.org/dev/virtualenvs/)) para a instalação das dependências
+
+
+Instale as dependências executando:
+
+```
+make install
+```
+
+Assim que as dependências tiverem sido instaladas execute:
+
+```
+make init
+```
+
+Uma mensagem `The bot is ready!` será exibida informando que o bot está executando.

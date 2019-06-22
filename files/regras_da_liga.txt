@@ -1,0 +1,37 @@
+REGRAS DA LIGA
+
+- As batalhas devem ser realizadas exclusivamente no ShowDown.
+- Cada participante pode desafiar apenas um ginásio por dia, perdendo ou ganhando não poderá desafiar outro ou o mesmo líder no mesmo dia.
+- Ao descumprir qualquer regra de batalha, ou até mesmo uma regra da liga, o participante recebe DERROTA automaticamente, tendo que cumprir o prazo de 1 dia de molho.
+
+REGRAS GERAIS DE BATALHA
+
+- O time do líder deve conter apenas Pokémon dos tipos do seu Ginásio. 
+- Single format: 6 vs 6.
+- Tier Smogon OU.
+- A função timer do showdown deve estar sempre acionada.
+- Multitype Clause: O time do desafiante não pode possuir dois ou mais pokémon que possuam um mesmo tipo (seja ele primário ou secundária), no caso de megas que mudam um dos tipos, é considerado os três tipo. Exemplo: Mega gyarados ocupa, Agua, Dark e Fly.
+- Monotype Megas: O líder que optar em usar um pokemon que só tem o seu tipo quando mega (Exemplo Mega Gyarados no ginásio dark), ao joga-lo deve obrigatoriamente evoluir no mesmo turno, não pode remove-lo sem mega evoluir.
+- As Smogon-wide clauses (encontradas em http://www.smogon.com/sm/articles/clauses) devem ser respeitadas, a menos que alguma regra específica do Ginásio as sobreponha.
+- Cada Ginasio pode ter (ou não) regras específicas. Essas regras podem sobrepor as regras smogon e podem sofrer alterações durante a liga.
+
+LIDERES
+Renan - normal 
+Guinho - rock
+Clev - eletric
+Berg - Ghost 
+Jan - ice
+Krebs - poison 
+Maicon - water
+Jr - dark
+Wellington - grama
+Bruno - Dragon
+
+ELITE
+Rocco - bug
+Rafa - steel
+Emerson - fire
+Clarisse - fada
+
+
+https://media.discordapp.net/attachments/590496275925958678/591990057276276750/image0.jpg?width=331&height=430
