@@ -98,3 +98,16 @@ async def random_quote(ctx):
     with open('files/quotes.txt', 'r') as f:
         quotes = f.readlines()
     await ctx.send(choice(quotes))
+
+@client.command()
+async def random_pokemon(ctx):
+    '''
+    Responde com um pokémon aleatório
+    '''
+    with open('files/pokes.txt', 'r') as f:
+        pokes = f.readlines()
+
+    i_choose_you = choice(pokes).split('\n')[0]
+    poke = get_pokemon_data(i_choose_you.lower())
+    response = dex_information(poke)
+    await ctx.send(response)
