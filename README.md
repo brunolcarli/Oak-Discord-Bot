@@ -12,12 +12,12 @@ PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
 
 # Adicionando o Oak ao seu Servidor
 
-Se você não é desenvolvedor e não quer customizar um bot, mas gostaria de utilziar
+Se você não é desenvolvedor e não quer customizar um bot, mas gostaria de utilizar
 o `Oak` no seu servidor, basta utilizar este link:
 
 https://discordapp.com/api/oauth2/authorize?client_id=590673073087315968&permissions=18432&scope=bot
 
-Isto é um convite para utilziar o `Oak` no seu servidor Discord, basta colar no seu navegador e dar permissão de acesso ao bot para que ele possa participar dos seus canais Discord no servidor de sua preferência.
+Isto é um convite para utilizar o `Oak` no seu servidor Discord, basta colar no seu navegador e dar permissão de acesso ao bot para que ele possa participar dos seus canais Discord no servidor de sua preferência.
 
 Veja a [documentação](https://github.com/brunolcarli/Oak-Discord-Bot/wiki) para conhecer os comandos do bot ou apenas execute no chat do discord:
 
