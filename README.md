@@ -19,7 +19,7 @@ https://discordapp.com/api/oauth2/authorize?client_id=590673073087315968&permiss
 
 Isto é um convite para utilziar o `Oak` no seu servidor Discord, basta colar no seu navegador e dar permissão de acesso ao bot para que ele possa participar dos seus canais Discord no servidor de sua preferência.
 
-Veja adocumentação para conhecer os comandos do bot ou apenas execute no chat do discord:
+Veja a [documentação](https://github.com/brunolcarli/Oak-Discord-Bot/wiki) para conhecer os comandos do bot ou apenas execute no chat do discord:
 
 ```
 /help
