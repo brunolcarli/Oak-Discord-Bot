@@ -111,3 +111,13 @@ async def random_pokemon(ctx):
     poke = get_pokemon_data(i_choose_you.lower())
     response = dex_information(poke)
     await ctx.send(response)
+
+@client.command()
+async def gugasaur(ctx):
+    '''
+    Responde com o pokemon do guga
+    '''
+    poke = get_pokemon_data('tyrantrum')
+    response = dex_information(poke)
+
+    await ctx.send(response)
