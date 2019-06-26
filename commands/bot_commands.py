@@ -4,7 +4,11 @@ from discord.ext import commands
 from util.general_tools import get_similar_pokemon
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
-                            get_ability_data, ability_information)   
+                            get_ability_data, ability_information)
+from settings import LISA_URL
+import requests
+import json
+
 
 client = commands.Bot(command_prefix='/')
 
@@ -85,18 +89,38 @@ async def quote(ctx, *phrase):
     '''
     Salva uma mensagem como quote para ser eternamente lembrado
     '''
-    quoted = ' '.join(word for word in phrase)
-    with open('files/quotes.txt', 'a') as f:
-        f.writelines(quoted + '\n')
-    await ctx.send(quoted)
+    if phrase:
+        quoted = ' '.join(word for word in phrase)
+
+        part_1 = "{\"query\":\"mutation{\\n  createAbpQuote(input:{\\n    quote: \\\" " 
+        part_2 = "\\\"\\n  }){\\n    response\\n  }\\n}\"}"
+        headers = {
+            'content-type': "application/json"
+            }
+        payload = part_1 + quoted + part_2
+        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        response = json.loads(response.text)
+        response = response['data']['createAbpQuote'].get('response')
+
+    else:
+        response = "Insira alguma pérola!"
+
+    await ctx.send(response)
 
 @client.command()
 async def random_quote(ctx):
     '''
     Retorna um quote aleatório
     '''
-    with open('files/quotes.txt', 'r') as f:
-        quotes = f.readlines()
+    payload = "{\"query\":\"query{\\n  abpQuotes\\n}\"}"
+    headers = {
+        'content-type': "application/json"
+        }
+
+    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    response = json.loads(response.text)
+    quotes = response['data'].get('abpQuotes')
+
     await ctx.send(choice(quotes))
 
 @client.command()
@@ -121,3 +145,48 @@ async def gugasaur(ctx):
     response = dex_information(poke)
 
     await ctx.send(response)
+
+@client.command()
+async def trainer_register(ctx, name='', nickname=''):
+    '''
+    Registra um treinador na liga
+    '''
+    if not name:
+        oak_response = 'Por favor insira no nome do treinador'
+    if not nickname:
+        oak_response = 'Por favor insira o nickname do treinador'
+    
+    if name and nickname:
+
+        part_1 = "{\"query\":\"mutation createTrainer{\\n  createTrainer(input:{\\n    name: \\\""
+        part_2 = "\\\",\\n    nickname: \\\""
+        part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      name\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\"}"
+
+        headers = {
+            'content-type': "application/json"
+            }
+
+        payload = part_1 + name + part_2 + nickname + part_3
+
+        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        response = json.loads(response.text)
+        trainer = response['data']['createTrainer'].get('trainer')
+
+        badges = ', '.join(badge for badge in trainer.get('badges'))
+
+        oak_response = '\nTREINADOR REGISTRADO:\n\n'
+        oak_response += 'Nome: {}\nNick: {}\n'.format(
+            trainer.get('name'),
+            trainer.get('nickname')
+        )
+        oak_response += 'Vitórias: {}\nDerrotas: {}\n'.format(
+            trainer.get('numWins'),
+            trainer.get('numLosses')
+        )
+        oak_response += 'Batalhas Disputadas: {}\n'.format(
+            trainer.get('numBattles')
+        )
+        oak_response += 'Insígnias conquistadas:\n{}\n\n'.format(
+            badges
+        )
+    await ctx.send(oak_response)
