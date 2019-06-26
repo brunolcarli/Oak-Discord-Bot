@@ -190,3 +190,83 @@ async def trainer_register(ctx, name='', nickname=''):
             badges
         )
     await ctx.send(oak_response)
+
+@client.command()
+async def league_trainers(ctx):
+    '''
+    Retorna uma lista com o nickname de todos os treinadores
+    registrados na liga.
+    '''
+
+    payload = "{\"query\":\"query trainers{\\n  abpTrainers{\\n    nickname\\n\\t}\\n}\\n\\n\",\"operationName\":\"trainers\"}"
+    headers = {
+        'content-type': "application/json"
+    }
+
+    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    response = json.loads(response.text)
+    trainer_list = response['data'].get('abpTrainers')
+    trainers = '\n'.join(trainer.get('nickname') for trainer in trainer_list)
+
+    await ctx.send(trainers)
+
+@client.command()
+async def trainer(ctx, nickname=''):
+    '''
+    Retorna informações de um trainer.
+    '''
+    if not nickname:
+        oak_response = 'Insira o nickname do treinador'
+    else:
+
+        part_1 = "{\"query\":\"query trainers{\\n  abpTrainers(nickname: \\\""
+        
+        part_2 = "\\\"){\\n    name\\n    nickname\\n    numWins\\n    numLosses\\n    numBattles\\n    badges{\\n      reference\\n    }\\n    battles{\\n      leader{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n\\t}\\n}\\n\\n\",\"operationName\":\"trainers\"}"
+        headers = {
+            'content-type': "application/json"
+        }
+        payload = part_1 + nickname + part_2
+
+        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        response = json.loads(response.text)
+
+        trainer = response['data'].get('abpTrainers')
+        if not trainer:
+            oak_response = 'Treinador não cadastrado! Você inseriu o nickname corretamente?'
+
+        else:
+
+            # Processa as insignias do treinador
+            badges = ', '.join(
+                badge.get('reference', '') for badge in trainer[0].get('badges')
+            )
+
+            # Processa as batalhas disputadas pelo jogador
+            battles = '\n'.join(
+                '\nDATA: {}\nVS: {}\nVencedor: {}\n'.format(
+                    b.get('battleDatetime'),
+                    b['leader'].get('nickname'),
+                    b.get('winner')
+                ) for b in trainer[0].get('battles')
+            )
+
+            oak_response = '\nINFO TRAINER:\n\n'
+            oak_response += 'NOME: {}\nNICK: {}\n'.format(
+                trainer[0].get('name'),
+                trainer[0].get('nickname')
+            )
+            oak_response += 'VITÓRIAS: {}\nDERROTAS: {}\n'.format(
+                trainer[0].get('numWins'),
+                trainer[0].get('numLosses')
+            )
+            oak_response += 'BATALHAS DISPUTADAS: {}\n'.format(
+                trainer[0].get('numBattles')
+            )
+            oak_response += 'INSÍGNIAS CONQUISTADAS: \n{}\n\n'.format(
+                badges
+            )
+            oak_response += 'REGISTRO DE BAtALHAS: \n{}\n'.format(
+                battles
+            )
+
+        await ctx.send(oak_response)
