@@ -297,7 +297,7 @@ async def league_leaders(ctx):
 @client.command()
 async def leader(ctx, nickname=''):
     '''
-    Retorna informações de um trainer.
+    Retorna informações de um líder da liga.
     '''
     if not nickname:
         oak_response = 'Insira o nickname do líder'
@@ -343,3 +343,66 @@ async def leader(ctx, nickname=''):
             )
 
         await ctx.send(oak_response)
+
+@client.command()
+async def leader_register(ctx, name='', nickname='', poke_type=None, role=''):
+    '''
+    Registra um líder de ginásio ou elite four
+    '''
+    user_permissions = set([i.name for i in ctx.author.roles])
+    if 'ADM' not in user_permissions:
+        oak_response = 'Você não tem permissão para isso!'
+
+    else:
+        role = role.upper()
+
+        if not name:
+            oak_response = 'Por favor insira no nome do líder'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+        if not nickname:
+            oak_response = 'Por favor insira o nickname do líder'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+        if not role:
+            oak_response = 'Por favor um dos cargos: gym_leader, elite_four'
+            oak_response += ' ou champion'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+        if role != 'CHAMPION':
+            oak_response = 'Por favor insira o tipo de pokemon do líder'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+
+        if name and nickname and role:
+
+            part_1 = "{\"query\":\"mutation{\\n  createLeader(input:{\\n    name: \\\""
+            part_2 = "\\\",\\n\\t\\tnickname: \\\""
+            part_3 = "\\\",\\n    pokemonType: "
+            part_4 = ",\\n    role: "
+            part_5 = "\\n  }){\\n    leader{\\n      id\\n      name\\n      numWins\\n      numLosses\\n      numBattles\\n      battles{\\n        winner\\n        battleDatetime\\n      }\\n      pokemonType\\n      role\\n    }\\n  }\\n}\"}"
+
+            payload = part_1 + name + part_2 + nickname + part_3
+            payload += poke_type.upper() + part_4 + role.upper() + part_5
+
+            headers = {
+                'content-type': "application/json"
+                }
+
+            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+            response = json.loads(response.text)
+            leader = response['data']['createLeader'].get('leader')
+
+            oak_response = '\nLIDER REGISTRADO:\n\n'
+            oak_response += 'Nome: {}\nNick: {}\n'.format(
+                leader.get('name'),
+                leader.get('nickname')
+            )
+            oak_response += 'Vitórias: {}\nDerrotas: {}\n'.format(
+                leader.get('numWins'),
+                leader.get('numLosses')
+            )
+            oak_response += 'Batalhas Disputadas: {}\n'.format(
+                leader.get('numBattles')
+            )
+            oak_response += 'Tipo: {}\nCargo: {}\n'.format(
+                leader.get('pokemonType').capitalize(),
+                leader.get('role').capitalize()
+            )
+    await ctx.send(oak_response)
