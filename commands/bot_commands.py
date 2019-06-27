@@ -151,44 +151,49 @@ async def trainer_register(ctx, name='', nickname=''):
     '''
     Registra um treinador na liga
     '''
-    if not name:
-        oak_response = 'Por favor insira no nome do treinador'
-    if not nickname:
-        oak_response = 'Por favor insira o nickname do treinador'
-    
-    if name and nickname:
+    user_permissions = set([i.name for i in ctx.author.roles])
+    if 'ADM' not in user_permissions:
+        oak_response = 'Você não tem permissão para isso!'
 
-        part_1 = "{\"query\":\"mutation createTrainer{\\n  createTrainer(input:{\\n    name: \\\""
-        part_2 = "\\\",\\n    nickname: \\\""
-        part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      name\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\"}"
+    else:
+        if not name:
+            oak_response = 'Por favor insira no nome do treinador'
+        if not nickname:
+            oak_response = 'Por favor insira o nickname do treinador'
+        
+        if name and nickname:
 
-        headers = {
-            'content-type': "application/json"
-            }
+            part_1 = "{\"query\":\"mutation createTrainer{\\n  createTrainer(input:{\\n    name: \\\""
+            part_2 = "\\\",\\n    nickname: \\\""
+            part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      name\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\"}"
 
-        payload = part_1 + name + part_2 + nickname + part_3
+            headers = {
+                'content-type': "application/json"
+                }
 
-        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
-        response = json.loads(response.text)
-        trainer = response['data']['createTrainer'].get('trainer')
+            payload = part_1 + name + part_2 + nickname + part_3
 
-        badges = ', '.join(badge for badge in trainer.get('badges'))
+            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+            response = json.loads(response.text)
+            trainer = response['data']['createTrainer'].get('trainer')
 
-        oak_response = '\nTREINADOR REGISTRADO:\n\n'
-        oak_response += 'Nome: {}\nNick: {}\n'.format(
-            trainer.get('name'),
-            trainer.get('nickname')
-        )
-        oak_response += 'Vitórias: {}\nDerrotas: {}\n'.format(
-            trainer.get('numWins'),
-            trainer.get('numLosses')
-        )
-        oak_response += 'Batalhas Disputadas: {}\n'.format(
-            trainer.get('numBattles')
-        )
-        oak_response += 'Insígnias conquistadas:\n{}\n\n'.format(
-            badges
-        )
+            badges = ', '.join(badge for badge in trainer.get('badges'))
+
+            oak_response = '\nTREINADOR REGISTRADO:\n\n'
+            oak_response += 'Nome: {}\nNick: {}\n'.format(
+                trainer.get('name'),
+                trainer.get('nickname')
+            )
+            oak_response += 'Vitórias: {}\nDerrotas: {}\n'.format(
+                trainer.get('numWins'),
+                trainer.get('numLosses')
+            )
+            oak_response += 'Batalhas Disputadas: {}\n'.format(
+                trainer.get('numBattles')
+            )
+            oak_response += 'Insígnias conquistadas:\n{}\n\n'.format(
+                badges
+            )
     await ctx.send(oak_response)
 
 @client.command()
