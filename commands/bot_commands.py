@@ -275,3 +275,71 @@ async def trainer(ctx, nickname=''):
             )
 
         await ctx.send(oak_response)
+
+@client.command()
+async def league_leaders(ctx):
+    '''
+    Retorna todos os líderes e elites
+    '''
+
+    payload = "{\"query\":\"query{\\n  abpLeaders{\\n    nickname\\n  }\\n}\"}"
+    headers = {
+        'content-type': "application/json"
+        }
+
+    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    response = json.loads(response.text)
+    leaders_list = response['data'].get('abpLeaders')
+    leaders = '\n'.join(leader.get('nickname') for leader in leaders_list)
+
+    await ctx.send(leaders)
+
+@client.command()
+async def leader(ctx, nickname=''):
+    '''
+    Retorna informações de um trainer.
+    '''
+    if not nickname:
+        oak_response = 'Insira o nickname do líder'
+
+    else:
+        part_1 = "{\"query\":\"query{\\n  abpLeaders(nickname: \\\""
+        part_2 = "\\\"){\\n    name\\n    nickname\\n    numWins\\n    numLosses\\n    numBattles\\n    battles{\\n      trainer{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n  }\\n}\"}"
+        headers = {
+            'content-type': "application/json"
+        }
+        payload = part_1 + nickname + part_2
+        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        response = json.loads(response.text)
+
+        leader = response['data'].get('abpLeaders')
+        if not leader:
+            oak_response = 'Líder não cadastrado! Você inseriu o nickname corretamente?'
+
+        else:
+            # Processa as batalhas disputadas pelo jogador
+            battles = '\n'.join(
+                '\nDATA: {}\nVS: {}\nVencedor: {}\n'.format(
+                    b.get('battleDatetime'),
+                    b['trainer'].get('nickname'),
+                    b.get('winner')
+                ) for b in leader[0].get('battles')
+            )
+
+            oak_response = '\nINFO LEADER:\n\n'
+            oak_response += 'NOME: {}\nNICK: {}\n'.format(
+                leader[0].get('name'),
+                leader[0].get('nickname')
+            )
+            oak_response += 'VITÓRIAS: {}\nDERROTAS: {}\n'.format(
+                leader[0].get('numWins'),
+                leader[0].get('numLosses')
+            )
+            oak_response += 'BATALHAS DISPUTADAS: {}\n'.format(
+                leader[0].get('numBattles')
+            )
+            oak_response += 'REGISTRO DE BAtALHAS: \n{}\n'.format(
+                battles
+            )
+
+        await ctx.send(oak_response)
