@@ -345,7 +345,7 @@ async def leader(ctx, nickname=''):
         await ctx.send(oak_response)
 
 @client.command()
-async def leader_register(ctx, name='', nickname='', poke_type=None, role=''):
+async def leader_register(ctx, name='', nickname='',  role='', poke_type=None):
     '''
     Registra um líder de ginásio ou elite four
     '''
@@ -358,17 +358,18 @@ async def leader_register(ctx, name='', nickname='', poke_type=None, role=''):
 
         if not name:
             oak_response = 'Por favor insira no nome do líder'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
         if not nickname:
             oak_response = 'Por favor insira o nickname do líder'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
         if not role:
             oak_response = 'Por favor um dos cargos: gym_leader, elite_four'
             oak_response += ' ou champion'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
-        if role != 'CHAMPION':
+            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
+        if not poke_type and role != 'CHAMPION':
             oak_response = 'Por favor insira o tipo de pokemon do líder'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME TYPE ROLE`\n'
+            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
+            await ctx.send(oak_response)
 
         if name and nickname and role:
 
@@ -378,12 +379,14 @@ async def leader_register(ctx, name='', nickname='', poke_type=None, role=''):
             part_4 = ",\\n    role: "
             part_5 = "\\n  }){\\n    leader{\\n      id\\n      name\\n      numWins\\n      numLosses\\n      numBattles\\n      battles{\\n        winner\\n        battleDatetime\\n      }\\n      pokemonType\\n      role\\n    }\\n  }\\n}\"}"
 
+            poke_type = poke_type.upper() if poke_type else 'null'
+
             payload = part_1 + name + part_2 + nickname + part_3
-            payload += poke_type.upper() + part_4 + role.upper() + part_5
+            payload += poke_type + part_4 + role.upper() + part_5
 
             headers = {
                 'content-type': "application/json"
-                }
+            }
 
             response = requests.request("POST", LISA_URL, data=payload, headers=headers)
             response = json.loads(response.text)
@@ -404,5 +407,47 @@ async def leader_register(ctx, name='', nickname='', poke_type=None, role=''):
             oak_response += 'Tipo: {}\nCargo: {}\n'.format(
                 leader.get('pokemonType').capitalize(),
                 leader.get('role').capitalize()
+            )
+    await ctx.send(oak_response)
+
+@client.command()
+async def battle_register(ctx, trainer='', leader='', winner=''):
+    '''
+    Registra uma batalha entre um treinador e um lider ou elite four
+    '''
+    user_permissions = set([i.name for i in ctx.author.roles])
+    if 'ADM' not in user_permissions and 'Gym Leader' not in user_permissions:
+        oak_response = 'Você não tem permissão para isso!'
+
+    else:
+        if not trainer or not leader or not winner:
+            oak_response = 'Registro incorreto de batalha.\n'
+            oak_response += 'Uso: `/battle_register TRAINER_NICKNAME'
+            oak_response += ' LEADER_NICKNAME WINNER_NICKNAME`\n'
+        else:
+
+            part_1 = "{\"query\":\"mutation{\\n  createBattle(input:{\\n    trainerNickname: \\\""
+            part_2 = "\\\",\\n    leaderNickname: \\\""
+            part_3 = "\\\",\\n    winner: \\\""
+            part_4 = "\\\"\\n  }){\\n    battle{\\n      trainer{\\n        name\\n      }\\n      leader{\\n        name\\n      }\\n      winner\\n      battleDatetime\\n    }\\n  }\\n}\"}"
+            
+            payload = part_1 + trainer + part_2 + leader + part_3 + winner + part_4
+
+            headers = {
+                'content-type': "application/json"
+            }
+
+            response = requests.request("POST", url, data=payload, headers=headers)
+            response = json.loads(response.text)
+            battle = response['data']['createBattle'].get('battle')
+
+            oak_response = '\nBATALHA REGISTRADA\n'
+            oak_response += 'Trainer: {}\nLíder: {}\nVencedor: {}\n'.format(
+                battle['trainer'].get('name'),
+                battle['leader'].get('name'),
+                battle.get('winner'),
+            )
+            oak_response += 'Data da Batalha: {}\n\n'.format(
+                battle.get('battleDatetime')
             )
     await ctx.send(oak_response)
