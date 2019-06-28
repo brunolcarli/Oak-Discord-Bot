@@ -229,7 +229,7 @@ async def trainer(ctx, nickname=''):
 
         part_1 = "{\"query\":\"query trainers{\\n  abpTrainers(nickname: \\\""
         
-        part_2 = "\\\"){\\n    name\\n    nickname\\n    numWins\\n    numLosses\\n    numBattles\\n    badges{\\n      reference\\n    }\\n    battles{\\n      leader{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n\\t}\\n}\\n\\n\",\"operationName\":\"trainers\"}"
+        part_2 = "\\\"){\\n    nickname\\n    numWins\\n    numLosses\\n    numBattles\\n    badges{\\n      reference\\n    }\\n    battles{\\n      leader{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n\\t}\\n}\\n\\n\",\"operationName\":\"trainers\"}"
         headers = {
             'content-type': "application/json"
         }
@@ -259,8 +259,7 @@ async def trainer(ctx, nickname=''):
             )
 
             oak_response = '\nINFO TRAINER:\n\n'
-            oak_response += 'NOME: {}\nNICK: {}\n'.format(
-                trainer[0].get('name'),
+            oak_response += 'NICK: {}\n'.format(
                 trainer[0].get('nickname')
             )
             oak_response += 'VITÓRIAS: {}\nDERROTAS: {}\n'.format(
@@ -273,7 +272,7 @@ async def trainer(ctx, nickname=''):
             oak_response += 'INSÍGNIAS CONQUISTADAS: \n{}\n\n'.format(
                 badges
             )
-            oak_response += 'REGISTRO DE BAtALHAS: \n{}\n'.format(
+            oak_response += 'REGISTRO DE BATALHAS: \n{}\n'.format(
                 battles
             )
 
