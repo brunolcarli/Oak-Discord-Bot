@@ -485,7 +485,7 @@ async def add_badge(ctx, trainer='', badge=''):
 
     part_1 = "{\"query\":\"mutation addBadge{\\n  addBadgeToTrainer(input:{\\n    badge: "
     part_2 = "\\n    trainer: \\\""
-    part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      name\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\",\"operationName\":\"addBadge\"}"
+    part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\",\"operationName\":\"addBadge\"}"
 
     payload = part_1 + badge.upper() + part_2 + trainer + part_3
 
@@ -503,8 +503,7 @@ async def add_badge(ctx, trainer='', badge=''):
     )
 
     oak_response = '\nINFO TRAINER:\n\n'
-    oak_response += 'NOME: {}\nNICK: {}\n'.format(
-        trainer.get('name'),
+    oak_response += 'NICK: {}\n'.format(
         trainer.get('nickname')
     )
     oak_response += 'VITÓRIAS: {}\nDERROTAS: {}\n'.format(
