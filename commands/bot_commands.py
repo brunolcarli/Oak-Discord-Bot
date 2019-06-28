@@ -429,7 +429,7 @@ async def battle_register(ctx, trainer='', leader='', winner=''):
             part_1 = "{\"query\":\"mutation{\\n  createBattle(input:{\\n    trainerNickname: \\\""
             part_2 = "\\\",\\n    leaderNickname: \\\""
             part_3 = "\\\",\\n    winner: \\\""
-            part_4 = "\\\"\\n  }){\\n    battle{\\n      trainer{\\n        name\\n      }\\n      leader{\\n        name\\n      }\\n      winner\\n      battleDatetime\\n    }\\n  }\\n}\"}"
+            part_4 = "\\\"\\n  }){\\n    battle{\\n      trainer{\\n        nickname\\n      }\\n      leader{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n  }\\n}\"}"
             
             payload = part_1 + trainer + part_2 + leader + part_3 + winner + part_4
 
@@ -443,8 +443,8 @@ async def battle_register(ctx, trainer='', leader='', winner=''):
 
             oak_response = '\nBATALHA REGISTRADA\n'
             oak_response += 'Trainer: {}\nLíder: {}\nVencedor: {}\n'.format(
-                battle['trainer'].get('name'),
-                battle['leader'].get('name'),
+                battle['trainer'].get('nickname'),
+                battle['leader'].get('nickname'),
                 battle.get('winner'),
             )
             oak_response += 'Data da Batalha: {}\n\n'.format(
