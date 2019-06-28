@@ -306,7 +306,7 @@ async def leader(ctx, nickname=''):
 
     else:
         part_1 = "{\"query\":\"query{\\n  abpLeaders(nickname: \\\""
-        part_2 = "\\\"){\\n    name\\n    nickname\\n    numWins\\n    numLosses\\n    numBattles\\n    battles{\\n      trainer{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n  }\\n}\"}"
+        part_2 = "\\\"){\\n    nickname\\n    numWins\\n    numLosses\\n    numBattles\\n    battles{\\n      trainer{\\n        nickname\\n      }\\n      winner\\n      battleDatetime\\n    }\\n  }\\n}\"}"
         headers = {
             'content-type': "application/json"
         }
@@ -329,8 +329,7 @@ async def leader(ctx, nickname=''):
             )
 
             oak_response = '\nINFO LEADER:\n\n'
-            oak_response += 'NOME: {}\nNICK: {}\n'.format(
-                leader[0].get('name'),
+            oak_response += 'NICK: {}\n'.format(
                 leader[0].get('nickname')
             )
             oak_response += 'VITÓRIAS: {}\nDERROTAS: {}\n'.format(
