@@ -338,7 +338,7 @@ async def leader(ctx, nickname=''):
             oak_response += 'BATALHAS DISPUTADAS: {}\n'.format(
                 leader[0].get('numBattles')
             )
-            oak_response += 'REGISTRO DE BAtALHAS: \n{}\n'.format(
+            oak_response += 'REGISTRO DE BATALHAS: \n{}\n'.format(
                 battles
             )
 
@@ -437,7 +437,7 @@ async def battle_register(ctx, trainer='', leader='', winner=''):
                 'content-type': "application/json"
             }
 
-            response = requests.request("POST", url, data=payload, headers=headers)
+            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
             response = json.loads(response.text)
             battle = response['data']['createBattle'].get('battle')
 
@@ -450,4 +450,72 @@ async def battle_register(ctx, trainer='', leader='', winner=''):
             oak_response += 'Data da Batalha: {}\n\n'.format(
                 battle.get('battleDatetime')
             )
+    await ctx.send(oak_response)
+
+@client.command()
+async def add_badge(ctx, trainer='', badge=''):
+    '''
+    Presenteia um treinador com uma insígnia.
+    '''
+    user_roles = set([i.name for i in ctx.author.roles])
+    if 'ADM' not in user_roles and 'Gym Leader' not in user_roles:
+        await ctx.send('Você não tem permissão para isso!')
+
+    if not trainer:
+        await ctx.send('Especifique o nickname do treinador.')
+
+    if not badge:
+        await ctx.send('Especifique a insignia.')
+
+    badges = {
+        'Normal', 'Rock', 'Electric',
+        'Ghost', 'Ice', 'Poison', 'Water',
+        'Dark', 'Grass', 'Dragon'
+    }
+
+    if badge.capitalize() not in badges:
+        response = 'Insígnia inválida, a insignia deve ser uma das seguintes:\n'
+        response += ', '.join(b for b in badges)
+        await ctx.send(response)
+
+    if 'ADM' not in user_roles and badge.capitalize() not in user_roles:
+        await ctx.send(
+            'Você só pode dar a insígnia do seu ginásio.'
+        )
+
+    part_1 = "{\"query\":\"mutation addBadge{\\n  addBadgeToTrainer(input:{\\n    badge: "
+    part_2 = "\\n    trainer: \\\""
+    part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      name\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\",\"operationName\":\"addBadge\"}"
+
+    payload = part_1 + badge.upper() + part_2 + trainer + part_3
+
+    headers = {
+        'content-type': "application/json"
+        }
+
+    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    response = json.loads(response.text)
+    trainer = response['data']['addBadgeToTrainer'].get('trainer')
+
+    # Processa as insignias do treinador
+    badges = ', '.join(
+        badge.get('reference', '') for badge in trainer.get('badges')
+    )
+
+    oak_response = '\nINFO TRAINER:\n\n'
+    oak_response += 'NOME: {}\nNICK: {}\n'.format(
+        trainer.get('name'),
+        trainer.get('nickname')
+    )
+    oak_response += 'VITÓRIAS: {}\nDERROTAS: {}\n'.format(
+        trainer.get('numWins'),
+        trainer.get('numLosses')
+    )
+    oak_response += 'BATALHAS DISPUTADAS: {}\n'.format(
+        trainer.get('numBattles')
+    )
+    oak_response += 'INSÍGNIAS CONQUISTADAS: \n{}\n\n'.format(
+        badges
+    )
+
     await ctx.send(oak_response)
