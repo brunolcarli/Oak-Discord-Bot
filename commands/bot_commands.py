@@ -8,6 +8,7 @@ from util.get_api_data import (dex_information, get_pokemon_data,
 from settings import LISA_URL
 import requests
 import json
+from tabulate import tabulate
 
 
 client = commands.Bot(command_prefix='/')
@@ -519,3 +520,40 @@ async def add_badge(ctx, trainer='', badge=''):
     )
 
     await ctx.send(oak_response)
+
+@client.command()
+async def score(ctx):
+    '''
+    Mostra o placar da liga
+    '''
+    payload = "{\"query\":\"query{\\n  abpScoreBoard{\\n    trainers{\\n      nickname\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        reference\\n      }\\n    }\\n  }\\n}\"}"
+    headers = {
+        'content-type': "application/json"
+        }
+
+    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    response = json.loads(response.text)
+    trainers = response['data']['abpScoreBoard'].get('trainers')
+
+    trainers = sorted(trainers, key=lambda t: len(t['badges']), reverse=True)
+
+    table = [
+        [
+        "Nick",
+        'Wins',
+        'Loss',
+        'Battles',
+        'Badges',
+        ],
+    ]
+    for trainer in trainers:
+        row = [
+            trainer.get('nickname'),
+            trainer.get('numWins'),
+            trainer.get('numLosses'),
+            trainer.get('numBattles'),
+        ]
+        table.append(row)
+    design = 'rst'
+    res = tabulate(table, tablefmt=design)
+    await ctx.send(res)
