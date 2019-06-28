@@ -346,7 +346,7 @@ async def leader(ctx, nickname=''):
         await ctx.send(oak_response)
 
 @client.command()
-async def leader_register(ctx, name='', nickname='',  role='', poke_type=None):
+async def leader_register(ctx, nickname='',  role='', poke_type=None):
     '''
     Registra um líder de ginásio ou elite four
     '''
@@ -357,9 +357,6 @@ async def leader_register(ctx, name='', nickname='',  role='', poke_type=None):
     else:
         role = role.upper()
 
-        if not name:
-            oak_response = 'Por favor insira no nome do líder'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
         if not nickname:
             oak_response = 'Por favor insira o nickname do líder'
             oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
@@ -372,18 +369,17 @@ async def leader_register(ctx, name='', nickname='',  role='', poke_type=None):
             oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
             await ctx.send(oak_response)
 
-        if name and nickname and role:
+        if nickname and role:
 
-            part_1 = "{\"query\":\"mutation{\\n  createLeader(input:{\\n    name: \\\""
-            part_2 = "\\\",\\n\\t\\tnickname: \\\""
-            part_3 = "\\\",\\n    pokemonType: "
-            part_4 = ",\\n    role: "
-            part_5 = "\\n  }){\\n    leader{\\n      id\\n      name\\n      numWins\\n      numLosses\\n      numBattles\\n      battles{\\n        winner\\n        battleDatetime\\n      }\\n      pokemonType\\n      role\\n    }\\n  }\\n}\"}"
+            part_1 = "{\"query\":\"mutation createLeader{\\n  createLeader(input:{\\n    nickname: \\\""
+            part_2 = "\\\",\\n\\t\\tpokemonType: "
+            part_3 = ",\\n    role: "
+            part_4 = "\\n  }){\\n    leader{\\n      id\\n      nickname\\n      numLosses\\n      numBattles\\n    pokemonType\\n    role\\n}\\n  }\\n}\\n\\n\",\"operationName\":\"createLeader\"}"
 
             poke_type = poke_type.upper() if poke_type else 'null'
 
-            payload = part_1 + name + part_2 + nickname + part_3
-            payload += poke_type + part_4 + role.upper() + part_5
+            payload = part_1 + nickname + part_2 + poke_type + part_3
+            payload += role.upper() + part_4
 
             headers = {
                 'content-type': "application/json"
@@ -394,8 +390,7 @@ async def leader_register(ctx, name='', nickname='',  role='', poke_type=None):
             leader = response['data']['createLeader'].get('leader')
 
             oak_response = '\nLIDER REGISTRADO:\n\n'
-            oak_response += 'Nome: {}\nNick: {}\n'.format(
-                leader.get('name'),
+            oak_response += 'Nick: {}\n'.format(
                 leader.get('nickname')
             )
             oak_response += 'Vitórias: {}\nDerrotas: {}\n'.format(
