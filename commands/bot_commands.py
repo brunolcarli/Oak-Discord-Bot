@@ -11,6 +11,12 @@ import json
 from tabulate import tabulate
 
 
+# TODO - move this to a constants, settings or config file
+class ErrorResponses:
+    E404 = 'Não encontrei esta informação! (E404)'
+    E111 = 'Agora estou ocupado. A Lisa está dodói. (E111)'
+
+
 client = commands.Bot(command_prefix='/')
 
 @client.event
@@ -148,7 +154,7 @@ async def gugasaur(ctx):
     await ctx.send(response)
 
 @client.command()
-async def trainer_register(ctx, name='', nickname=''):
+async def trainer_register(ctx, nickname=''):
     '''
     Registra um treinador na liga
     '''
@@ -157,22 +163,20 @@ async def trainer_register(ctx, name='', nickname=''):
         oak_response = 'Você não tem permissão para isso!'
 
     else:
-        if not name:
-            oak_response = 'Por favor insira no nome do treinador'
+
         if not nickname:
             oak_response = 'Por favor insira o nickname do treinador'
         
-        if name and nickname:
+        else:
 
-            part_1 = "{\"query\":\"mutation createTrainer{\\n  createTrainer(input:{\\n    name: \\\""
-            part_2 = "\\\",\\n    nickname: \\\""
-            part_3 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      name\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\"}"
+            part_1 = "{\"query\":\"mutation createTrainer{\\n  createTrainer(input:{\\n    nickname: \\\""
+            part_2 = "\\\"\\n  }){\\n    trainer{\\n      id\\n      nickname\\n      isWinner\\n      numWins\\n      numLosses\\n      numBattles\\n      badges{\\n        id\\n        reference\\n      }\\n    }\\n  }\\n}\\n\",\"operationName\":\"createTrainer\"}"
 
             headers = {
                 'content-type': "application/json"
                 }
 
-            payload = part_1 + name + part_2 + nickname + part_3
+            payload = part_1 + nickname + part_2
 
             response = requests.request("POST", LISA_URL, data=payload, headers=headers)
             response = json.loads(response.text)
@@ -181,8 +185,7 @@ async def trainer_register(ctx, name='', nickname=''):
             badges = ', '.join(badge for badge in trainer.get('badges'))
 
             oak_response = '\nTREINADOR REGISTRADO:\n\n'
-            oak_response += 'Nome: {}\nNick: {}\n'.format(
-                trainer.get('name'),
+            oak_response += 'Nick: {}\n'.format(
                 trainer.get('nickname')
             )
             oak_response += 'Vitórias: {}\nDerrotas: {}\n'.format(
@@ -203,7 +206,6 @@ async def league_trainers(ctx):
     Retorna uma lista com o nickname de todos os treinadores
     registrados na liga.
     '''
-
     payload = "{\"query\":\"query trainers{\\n  abpTrainers{\\n    nickname\\n\\t}\\n}\\n\\n\",\"operationName\":\"trainers\"}"
     headers = {
         'content-type': "application/json"
@@ -417,7 +419,11 @@ async def battle_register(ctx, trainer='', leader='', winner=''):
     Registra uma batalha entre um treinador e um lider ou elite four
     '''
     user_permissions = set([i.name for i in ctx.author.roles])
-    if 'ADM' not in user_permissions and 'Gym Leader' not in user_permissions:
+
+    # TODO get this from settings or config file
+    auth_only = {'ADM', 'Gym Leader', 'Elite Four'}
+
+    if not auth_only.intersection(set(user_permissions)):
         oak_response = 'Você não tem permissão para isso!'
 
     else:
