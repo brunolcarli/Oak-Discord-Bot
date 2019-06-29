@@ -41,7 +41,11 @@ async def dex(ctx, pokemon):
     '''
     Responde informações sobre um pokemon
     '''
-    poke = get_pokemon_data(pokemon.lower())
+    try:
+        poke = get_pokemon_data(pokemon.lower())
+    except:
+        await ctx.send(ErrorResponses.E112)
+
     response = dex_information(poke)
     if not response:
         response = 'Pokémon não registrado na PokeDex.\n'
