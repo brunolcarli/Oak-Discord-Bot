@@ -74,7 +74,11 @@ async def ability(ctx, ability):
     '''
     Responde informações sobre uma habilidade
     '''
-    data = get_ability_data(ability.lower())
+    try:
+        data = get_ability_data(ability.lower())
+    except:
+        await ctx.send(ErrorResponses.E112)
+
     response = ability_information(data)
     await ctx.send(response)
 
