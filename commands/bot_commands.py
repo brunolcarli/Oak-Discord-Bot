@@ -395,7 +395,16 @@ async def leader_register(ctx, nickname='',  role='', poke_type=None):
                 'content-type': "application/json"
             }
 
-            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+            try:
+                response = requests.request(
+                    "POST",
+                    LISA_URL,
+                    data=payload,
+                    headers=headers
+                )
+            except:
+                await ctx.send(ErrorResponses.E111)
+
             response = json.loads(response.text)
             leader = response['data']['createLeader'].get('leader')
 
