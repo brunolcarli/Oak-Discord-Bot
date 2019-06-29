@@ -56,7 +56,11 @@ async def item(ctx, item):
     '''
     Responde informações sobre um item
     '''
-    data = get_item_data(item.lower())
+    try:
+        data = get_item_data(item.lower())
+    except:
+        await ctx.send(ErrorResponses.E112)
+
     response = item_information(data)
     await ctx.send(response)
 
@@ -101,7 +105,12 @@ async def quote(ctx, *phrase):
             'content-type': "application/json"
             }
         payload = part_1 + quoted + part_2
-        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+
+        try:
+            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        except:
+            await ctx.send(ErrorResponses.E111)
+
         response = json.loads(response.text)
         response = response['data']['createAbpQuote'].get('response')
 
