@@ -395,14 +395,14 @@ async def leader_register(ctx, nickname='',  role='', poke_type=None):
 
         if not nickname:
             oak_response = 'Por favor insira o nickname do líder'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
+            oak_response += '\nUso: `/leader_register NICKNAME ROLE TYPE`\n'
         if not role:
             oak_response = 'Por favor um dos cargos: gym_leader, elite_four'
             oak_response += ' ou champion'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
+            oak_response += '\nUso: `/leader_register NICKNAME ROLE TYPE`\n'
         if not poke_type and role != 'CHAMPION':
             oak_response = 'Por favor insira o tipo de pokemon do líder'
-            oak_response += '\nUso: `/leader_register NAME NICKNAME ROLE TYPE`\n'
+            oak_response += '\nUso: `/leader_register NICKNAME ROLE TYPE`\n'
             await ctx.send(oak_response)
 
         if nickname and role:
