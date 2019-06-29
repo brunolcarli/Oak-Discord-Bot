@@ -470,7 +470,8 @@ async def add_badge(ctx, trainer='', badge=''):
     badges = {
         'Normal', 'Rock', 'Electric',
         'Ghost', 'Ice', 'Poison', 'Water',
-        'Dark', 'Grass', 'Dragon'
+        'Dark', 'Grass', 'Dragon', 'Psychic',
+        'Fairy'
     }
 
     if badge.capitalize() not in badges:
