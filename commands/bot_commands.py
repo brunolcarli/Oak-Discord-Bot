@@ -456,7 +456,16 @@ async def battle_register(ctx, trainer='', leader='', winner=''):
                 'content-type': "application/json"
             }
 
-            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+            try:
+                response = requests.request(
+                    "POST",
+                    LISA_URL,
+                    data=payload,
+                    headers=headers
+                )
+            except:
+                await ctx.send(ErrorResponses.E111)
+
             response = json.loads(response.text)
             battle = response['data']['createBattle'].get('battle')
 
