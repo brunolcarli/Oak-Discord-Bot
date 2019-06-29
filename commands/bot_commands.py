@@ -15,6 +15,7 @@ from tabulate import tabulate
 class ErrorResponses:
     E404 = 'Não encontrei esta informação! (E404)'
     E111 = 'Agora estou ocupado. A Lisa está dodói. (E111)'
+    E112 = 'Agora não posso, a pokedex quebrou, estou consertando. (E112)'
 
 
 client = commands.Bot(command_prefix='/')
@@ -317,9 +318,12 @@ async def leader(ctx, nickname=''):
             'content-type': "application/json"
         }
         payload = part_1 + nickname + part_2
-        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
-        response = json.loads(response.text)
+        try:
+            response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        except:
+            await ctx.send(ErrorResponses.E111)
 
+        response = json.loads(response.text)
         leader = response['data'].get('abpLeaders')
         if not leader:
             oak_response = 'Líder não cadastrado! Você inseriu o nickname corretamente?'
