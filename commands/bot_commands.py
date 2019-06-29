@@ -407,15 +407,21 @@ async def leader_register(ctx, nickname='',  role='', poke_type=None):
 
         if nickname and role:
 
-            part_1 = "{\"query\":\"mutation createLeader{\\n  createLeader(input:{\\n    nickname: \\\""
-            part_2 = "\\\",\\n\\t\\tpokemonType: "
-            part_3 = ",\\n    role: "
-            part_4 = "\\n  }){\\n    leader{\\n      id\\n      numWins\\n    nickname\\n      numLosses\\n      numBattles\\n    pokemonType\\n    role\\n}\\n  }\\n}\\n\\n\",\"operationName\":\"createLeader\"}"
+            if role.upper() != 'CHAMPION':
+                part_1 = "{\"query\":\"mutation createLeader{\\n  createLeader(input:{\\n    nickname: \\\""
+                part_2 = "\\\",\\n\\t\\tpokemonType: "
+                part_3 = ",\\n    role: "
+                part_4 = "\\n  }){\\n    leader{\\n      id\\n      numWins\\n    nickname\\n      numLosses\\n      numBattles\\n    pokemonType\\n    role\\n}\\n  }\\n}\\n\\n\",\"operationName\":\"createLeader\"}"
 
-            poke_type = poke_type.upper() if poke_type else 'null'
+                poke_type = poke_type.upper() if poke_type else 'null'
+                payload = part_1 + nickname + part_2 + poke_type + part_3
+                payload += role.upper() + part_4
+            
+            else:
+                part_1 = "{\"query\":\"mutation{\\n  createLeader(input:{\\n\\t\\tnickname: \\\""
+                part_2 = "\\\",\\n    role: CHAMPION\\n  }){\\n    leader{\\n      id\\n      numWins\\n      numLosses\\n      numBattles\\n      battles{\\n        winner\\n        battleDatetime\\n      }\\n      pokemonType\\n      role\\n    }\\n  }\\n}\"}"
 
-            payload = part_1 + nickname + part_2 + poke_type + part_3
-            payload += role.upper() + part_4
+                payload = part_1 + nickname + part_2
 
             headers = {
                 'content-type': "application/json"
