@@ -374,7 +374,7 @@ async def leader_register(ctx, nickname='',  role='', poke_type=None):
             part_1 = "{\"query\":\"mutation createLeader{\\n  createLeader(input:{\\n    nickname: \\\""
             part_2 = "\\\",\\n\\t\\tpokemonType: "
             part_3 = ",\\n    role: "
-            part_4 = "\\n  }){\\n    leader{\\n      id\\n      nickname\\n      numLosses\\n      numBattles\\n    pokemonType\\n    role\\n}\\n  }\\n}\\n\\n\",\"operationName\":\"createLeader\"}"
+            part_4 = "\\n  }){\\n    leader{\\n      id\\n      numWins\\n    nickname\\n      numLosses\\n      numBattles\\n    pokemonType\\n    role\\n}\\n  }\\n}\\n\\n\",\"operationName\":\"createLeader\"}"
 
             poke_type = poke_type.upper() if poke_type else 'null'
 
@@ -535,23 +535,24 @@ async def score(ctx):
 
     trainers = sorted(trainers, key=lambda t: len(t['badges']), reverse=True)
 
-    table = [
-        [
-        "Nick",
-        'Wins',
-        'Loss',
-        'Battles',
-        'Badges',
-        ],
-    ]
+    headers = ["Nick", 'Wins', 'Loss', 'Battles', 'Badges']
+
+    table = []
     for trainer in trainers:
         row = [
             trainer.get('nickname'),
+            '',
             trainer.get('numWins'),
             trainer.get('numLosses'),
             trainer.get('numBattles'),
+            len(trainer.get('badges'))
         ]
         table.append(row)
     design = 'rst'
-    res = tabulate(table, tablefmt=design)
+    res = tabulate(
+      table,
+      tablefmt=design,
+      headers=headers,
+      numalign="right",
+    )
     await ctx.send(res)
