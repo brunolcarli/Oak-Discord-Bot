@@ -275,7 +275,7 @@ async def league_leaders(ctx):
     Retorna todos os líderes e elites
     '''
 
-    payload = "{\"query\":\"query{\\n  abpLeaders{\\n    nickname\\n  }\\n}\"}"
+    payload = "{\"query\":\"query{\\n  abpLeaders{\\n    nickname\\n  role\\n  pokemonType\\n  }\\n}\"}"
     headers = {
         'content-type': "application/json"
         }
@@ -283,7 +283,13 @@ async def league_leaders(ctx):
     response = requests.request("POST", LISA_URL, data=payload, headers=headers)
     response = json.loads(response.text)
     leaders_list = response['data'].get('abpLeaders')
-    leaders = '\n'.join(leader.get('nickname') for leader in leaders_list)
+    leaders = '\n'.join(
+        'Nick: {} - {} : {}'.format(
+            leader.get('nickname'),
+            leader.get('role'),
+            leader.get('pokemonType')
+        ) for leader in leaders_list
+    )
 
     await ctx.send(leaders)
 
