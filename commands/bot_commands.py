@@ -69,15 +69,6 @@ async def regras_liga(ctx):
     await ctx.send(''.join(line for line in rules))
 
 @client.command()
-async def leaders(ctx):
-    '''
-    Responde com a lista de lideres e elites
-    '''
-    with open('files/leaders.txt', 'r') as f:
-        leaders_list = f.readlines()
-    await ctx.send(''.join(line for line in leaders_list))
-
-@client.command()
 async def ability(ctx, ability):
     '''
     Responde informações sobre uma habilidade
