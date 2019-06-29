@@ -127,9 +127,18 @@ async def random_quote(ctx):
     payload = "{\"query\":\"query{\\n  abpQuotes\\n}\"}"
     headers = {
         'content-type': "application/json"
-        }
+    }
 
-    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    try:
+        response = requests.request(
+            "POST",
+            LISA_URL,
+            data=payload,
+            headers=headers
+        )
+    except:
+        await ctx.send(ErrorResponses.E111)
+
     response = json.loads(response.text)
     quotes = response['data'].get('abpQuotes')
 
