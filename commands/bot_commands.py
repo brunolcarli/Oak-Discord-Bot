@@ -278,9 +278,18 @@ async def league_leaders(ctx):
     payload = "{\"query\":\"query{\\n  abpLeaders{\\n    nickname\\n  role\\n  pokemonType\\n  }\\n}\"}"
     headers = {
         'content-type': "application/json"
-        }
+    }
 
-    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    try:
+        response = requests.request(
+            "POST",
+            LISA_URL,
+            data=payload,
+            headers=headers
+        )
+    except:
+        await ctx.send(ErrorResponses.E111)
+
     response = json.loads(response.text)
     leaders_list = response['data'].get('abpLeaders')
     leaders = '\n'.join(
