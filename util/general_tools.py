@@ -2,6 +2,8 @@
 Módulo para ferramentas genéricas.
 '''
 import difflib
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 def get_similar_pokemon(pokemon):
     '''
@@ -48,3 +50,32 @@ def get_trainer_rank(pts):
     elif pts >= 1000:
         rank = 'Grande Mestre'
     return rank
+
+def sort_trainers(data):
+    '''
+    ordena uma lista filtrada de trainers pelos pontos.
+    '''
+    trainers = []
+    for trainer in data:
+        try:
+            trainer_has_points = int(trainer.get('Pontuação'))
+        except ValueError:
+            pass
+        else:
+            trainers.append(trainer)
+    return sorted(trainers, key=lambda i: int(i['Pontuação']), reverse=True)
+
+def get_ranked_spreadsheet():
+    scope = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(
+        'oak_ss_api_keys.json',
+        scope
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open('Rankeadas ABP').sheet1
+
+    data = sheet.get_all_records()
+    return sort_trainers(data)

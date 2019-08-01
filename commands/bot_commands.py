@@ -1,7 +1,8 @@
 from random import choice
 import discord
 from discord.ext import commands
-from util.general_tools import get_similar_pokemon, get_trainer_rank
+from util.general_tools import (get_similar_pokemon, get_trainer_rank,
+                                get_ranked_spreadsheet)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
                             get_ability_data, ability_information)
@@ -9,9 +10,6 @@ from settings import LISA_URL
 import requests
 import json
 from tabulate import tabulate
-
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 
 
 # TODO - move this to a constants, settings or config file
@@ -561,19 +559,8 @@ async def score(ctx):
 
 @client.command()
 async def top_ranked(ctx):
-    scope = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/drive'
-    ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(
-        'oak_ss_api_keys.json',
-        scope
-    )
-    client = gspread.authorize(creds)
-    sheet = client.open('Rankeadas ABP').sheet1
+    data = get_ranked_spreadsheet()
 
-    data = sheet.get_all_records()
-    data = sorted(data, key=lambda i: int(i['Pontuação']), reverse=True)
     table = [
         [
         'Nick',
@@ -599,3 +586,44 @@ async def top_ranked(ctx):
     design = 'rst'
     response = tabulate(table, tablefmt=design)
     await ctx.send('Top 20\n```{}```'.format(response))
+
+@client.command()
+async def ranked_trainer(ctx, trainer_nickname=''):
+    '''
+    Busca o score de um trainer na ranked pelo nick do caboclo.
+    '''
+    if not trainer_nickname:
+        await ctx.send('Forneça um nick\nUso: `/ranked_trainer <nickname>`')
+    else:
+        trainer_data = None
+        data = get_ranked_spreadsheet()
+        for trainer in data:
+            if trainer.get('Nome Showdown') == trainer_nickname:
+                trainer_data = trainer
+
+        if not trainer_data:
+            await ctx.send('Treinador não encontrado')
+        else:
+            table = [
+                [
+                'Nick',
+                'Wins',
+                'Losses',
+                'Pts',
+                'Battles',
+                'Rank'
+                ],
+            ]
+            rank =  get_trainer_rank(trainer_data.get('Pontuação'))
+            row = [
+                trainer_data.get('Nome Showdown'),
+                trainer_data.get('Vitórias'),
+                trainer_data.get('Derrotas'),
+                trainer_data.get('Pontuação'),
+                trainer_data.get('Total de Partidas'),
+                rank,
+            ]
+            table.append(row)
+            design = 'rst'
+            response = tabulate(table, tablefmt=design)
+            await ctx.send('```{}```'.format(response))
