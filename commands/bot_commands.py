@@ -1,7 +1,7 @@
 from random import choice
 import discord
 from discord.ext import commands
-from util.general_tools import get_similar_pokemon
+from util.general_tools import get_similar_pokemon, get_trainer_rank
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
                             get_ability_data, ability_information)
@@ -9,6 +9,9 @@ from settings import LISA_URL
 import requests
 import json
 from tabulate import tabulate
+
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 # TODO - move this to a constants, settings or config file
@@ -555,3 +558,43 @@ async def score(ctx):
     design = 'rst'
     res = tabulate(table, tablefmt=design)
     await ctx.send(res)
+
+@client.command()
+async def top_ranked(ctx):
+    scope = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(
+        'oak_ss_api_keys.json',
+        scope
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open('Rankeadas ABP').sheet1
+
+    data = sheet.get_all_records()
+    table = [
+        [
+        'Nick',
+        'Wins',
+        'Losses',
+        'Pts',
+        'Battles',
+        'Rank'
+        ],
+    ]
+    for trainer in data[:10]:
+        rank =  get_trainer_rank(trainer.get('Pontuação'))
+        row = [
+            trainer.get('Nome Showdown'),
+            trainer.get('Vitórias'),
+            trainer.get('Derrotas'),
+            trainer.get('Pontuação'),
+            trainer.get('Total de Partidas'),
+            rank,
+        ]
+        table.append(row)
+
+    design = 'rst'
+    response = tabulate(table, tablefmt=design)
+    await ctx.send('Top 10\n```{}```'.format(response))
