@@ -560,7 +560,7 @@ async def score(ctx):
     await ctx.send(res)
 
 @client.command()
-async def ranked_top(ctx):
+async def top_ranked(ctx):
     scope = [
         'https://spreadsheets.google.com/feeds',
         'https://www.googleapis.com/auth/drive'
