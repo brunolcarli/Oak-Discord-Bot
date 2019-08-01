@@ -557,7 +557,7 @@ async def score(ctx):
         table.append(row)
     design = 'rst'
     res = tabulate(table, tablefmt=design)
-    await ctx.send(res)
+    await ctx.send('```{}```'.format(res))
 
 @client.command()
 async def top_ranked(ctx):
@@ -573,6 +573,7 @@ async def top_ranked(ctx):
     sheet = client.open('Rankeadas ABP').sheet1
 
     data = sheet.get_all_records()
+    data = sorted(data, key=lambda i: int(i['Pontuação']), reverse=True)
     table = [
         [
         'Nick',
@@ -583,7 +584,7 @@ async def top_ranked(ctx):
         'Rank'
         ],
     ]
-    for trainer in data[:10]:
+    for trainer in data[:20]:
         rank =  get_trainer_rank(trainer.get('Pontuação'))
         row = [
             trainer.get('Nome Showdown'),
@@ -597,4 +598,4 @@ async def top_ranked(ctx):
 
     design = 'rst'
     response = tabulate(table, tablefmt=design)
-    await ctx.send('Top 10\n```{}```'.format(response))
+    await ctx.send('Top 20\n```{}```'.format(response))
