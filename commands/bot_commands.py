@@ -145,6 +145,9 @@ async def gugasaur(ctx):
 
 @client.command()
 async def top_ranked(ctx):
+    '''
+    Retorna o topo do placar
+    '''
     data = get_ranked_spreadsheet()
 
     table = [
@@ -214,3 +217,36 @@ async def ranked_trainer(ctx, *trainer_nickname):
             design = 'rst'
             response = tabulate(table, tablefmt=design)
             await ctx.send('```{}```'.format(response))
+
+@client.command()
+async def noob(ctx):
+    '''
+    Retorna o final do placar.
+    '''
+    data = get_ranked_spreadsheet()
+    data = sorted(data, key=lambda i: int(i['Pontuação']))
+    table = [
+        [
+        'Nick',
+        'Wins',
+        'Losses',
+        'Pts',
+        'Battles',
+        'Rank'
+        ],
+    ]
+    for trainer in data[:20]:
+        rank =  get_trainer_rank(trainer.get('Pontuação'))
+        row = [
+            trainer.get('Nome Showdown'),
+            trainer.get('Vitórias'),
+            trainer.get('Derrotas'),
+            trainer.get('Pontuação'),
+            trainer.get('Total de Partidas'),
+            rank,
+        ]
+        table.append(row)
+
+    design = 'rst'
+    response = tabulate(table, tablefmt=design)
+    await ctx.send('Noob 20\n```{}```'.format(response))
