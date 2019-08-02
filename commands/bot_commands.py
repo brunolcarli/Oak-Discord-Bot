@@ -11,7 +11,6 @@ import requests
 import json
 from tabulate import tabulate
 
-
 # TODO - move this to a constants, settings or config file
 class ErrorResponses:
     E404 = 'Não encontrei esta informação! (E404)'
@@ -175,13 +174,14 @@ async def top_ranked(ctx):
     await ctx.send('Top 20\n```{}```'.format(response))
 
 @client.command()
-async def ranked_trainer(ctx, trainer_nickname=''):
+async def ranked_trainer(ctx, *trainer_nickname):
     '''
     Busca o score de um trainer na ranked pelo nick do caboclo.
     '''
     if not trainer_nickname:
         await ctx.send('Forneça um nick\nUso: `/ranked_trainer <nickname>`')
     else:
+        trainer_nickname = ' '.join(word for word in trainer_nickname)
         trainer_data = None
         data = get_ranked_spreadsheet()
         for trainer in data:
