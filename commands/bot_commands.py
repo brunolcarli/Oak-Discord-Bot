@@ -59,14 +59,6 @@ async def item(ctx, item):
     response = item_information(data)
     await ctx.send(response)
 
-
-    '''
-    Responde com a lista de lideres e elites
-    '''
-    with open('files/leaders.txt', 'r') as f:
-        leaders_list = f.readlines()
-    await ctx.send(''.join(line for line in leaders_list))
-
 @client.command()
 async def ability(ctx, ability):
     '''
