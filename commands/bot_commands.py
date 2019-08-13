@@ -6,7 +6,7 @@ from util.general_tools import (get_similar_pokemon, get_trainer_rank,
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
                             get_ability_data, ability_information)
-from settings import LISA_URL
+from settings import (LISA_URL, RANKEADAS_SPREADSHEET_ID, PONTUACAO_INDEX, NOME_SD_INDEX)
 import requests
 import json
 from tabulate import tabulate
@@ -146,32 +146,14 @@ async def gugasaur(ctx):
 @client.command()
 async def top_ranked(ctx):
     data = get_ranked_spreadsheet()
-
-    table = [
-        [
-        'Nick',
-        'Wins',
-        'Losses',
-        'Pts',
-        'Battles',
-        'Rank'
-        ],
-    ]
+    table = get_initial_ranked_table()
+    
     for trainer in data[:20]:
-        rank =  get_trainer_rank(trainer.get('Pontuação'))
-        row = [
-            trainer.get('Nome Showdown'),
-            trainer.get('Vitórias'),
-            trainer.get('Derrotas'),
-            trainer.get('Pontuação'),
-            trainer.get('Total de Partidas'),
-            rank,
-        ]
-        table.append(row)
+        trainer = get_trainer_rank_row(trainer)        
+        table.append(trainer)
 
-    design = 'rst'
-    response = tabulate(table, tablefmt=design)
-    await ctx.send('Top 20\n```{}```'.format(response))
+    output = get_table_output(table)
+    await ctx.send(output)
 
 @client.command()
 async def ranked_trainer(ctx, *trainer_nickname):
@@ -180,37 +162,38 @@ async def ranked_trainer(ctx, *trainer_nickname):
     '''
     if not trainer_nickname:
         await ctx.send('Forneça um nick\nUso: `/ranked_trainer <nickname>`')
-    else:
-        trainer_nickname = ' '.join(word for word in trainer_nickname)
-        trainer_data = None
-        data = get_ranked_spreadsheet()
-        for trainer in data:
-            if trainer.get('Nome Showdown') == trainer_nickname:
-                trainer_data = trainer
+        return
+    
+    trainer_nickname = ' '.join(word for word in trainer_nickname)
+    trainer_data = None
+    data = get_ranked_spreadsheet()
+    for trainer in data:
+        if trainer[NOME_SD_INDEX] == trainer_nickname:
+            trainer_data = trainer
 
-        if not trainer_data:
-            await ctx.send('Treinador não encontrado')
-        else:
-            table = [
-                [
-                'Nick',
-                'Wins',
-                'Losses',
-                'Pts',
-                'Battles',
-                'Rank'
-                ],
-            ]
-            rank =  get_trainer_rank(trainer_data.get('Pontuação'))
-            row = [
-                trainer_data.get('Nome Showdown'),
-                trainer_data.get('Vitórias'),
-                trainer_data.get('Derrotas'),
-                trainer_data.get('Pontuação'),
-                trainer_data.get('Total de Partidas'),
-                rank,
-            ]
-            table.append(row)
-            design = 'rst'
-            response = tabulate(table, tablefmt=design)
-            await ctx.send('```{}```'.format(response))
+    if not trainer_data:
+        await ctx.send('Treinador não encontrado')
+        return
+
+    table = get_initial_ranked_table()
+    trainer = get_trainer_rank_row(trainer_data)
+    table.append(trainer)
+
+    output = get_table_output(table)
+    await ctx.send(output)
+
+def get_initial_ranked_table():
+    return [
+        [ 'Nick', 'Wins', 'Losses', 'Pts', 'Battles', 'Rank' ],
+    ]
+
+def get_trainer_rank_row(trainer):
+    rank =  get_trainer_rank(trainer[PONTUACAO_INDEX])
+    del trainer[0]
+    trainer.append(rank)
+    return trainer
+
+def get_table_output(table):
+    design = 'rst'
+    response = tabulate(table, tablefmt=design)
+    return '```{}```'.format(response)
