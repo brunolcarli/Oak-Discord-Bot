@@ -2,8 +2,9 @@
 Módulo para ferramentas genéricas.
 '''
 import difflib
-import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build
+from settings import (RANKEADAS_SPREADSHEET_ID, PONTUACAO_INDEX, NOME_SD_INDEX)
 
 def get_similar_pokemon(pokemon):
     '''
@@ -54,28 +55,30 @@ def get_trainer_rank(pts):
 def sort_trainers(data):
     '''
     ordena uma lista filtrada de trainers pelos pontos.
-    '''
+    '''    
     trainers = []
     for trainer in data:
         try:
-            trainer_has_points = int(trainer.get('Pontuação'))
+            trainer_has_points = int(trainer[PONTUACAO_INDEX])
         except ValueError:
             pass
         else:
             trainers.append(trainer)
-    return sorted(trainers, key=lambda i: int(i['Pontuação']), reverse=True)
+    return sorted(trainers, key=lambda i: int(i[PONTUACAO_INDEX]), reverse=True)
 
 def get_ranked_spreadsheet():
-    scope = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/drive'
-    ]
+    data = get_spreadsheet_data(RANKEADAS_SPREADSHEET_ID, 'Rank!A1:F255')
+    return sort_trainers(data)
+
+def get_spreadsheet_data(spreadSheetId, cellRange):
+    scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     creds = ServiceAccountCredentials.from_json_keyfile_name(
         'oak_ss_api_keys.json',
         scope
     )
-    client = gspread.authorize(creds)
-    sheet = client.open('Rankeadas ABP').sheet1
+    service = build('sheets', 'v4', credentials=creds)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=spreadSheetId, range=cellRange).execute()
+    values = result.get('values', [])
 
-    data = sheet.get_all_records()
-    return sort_trainers(data)
+    return values
