@@ -2,9 +2,10 @@
 Módulo para ferramentas genéricas.
 '''
 import difflib
+import string
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
-from settings import (RANKEADAS_SPREADSHEET_ID, PONTUACAO_INDEX, NOME_SD_INDEX)
+from settings import (RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX)
 
 def get_similar_pokemon(pokemon):
     '''
@@ -59,15 +60,15 @@ def sort_trainers(data):
     trainers = []
     for trainer in data:
         try:
-            trainer_has_points = int(trainer[PONTUACAO_INDEX])
+            trainer_has_points = int(trainer[SCORE_INDEX])
         except ValueError:
             pass
         else:
             trainers.append(trainer)
-    return sorted(trainers, key=lambda i: int(i[PONTUACAO_INDEX]), reverse=True)
+    return sorted(trainers, key=lambda i: int(i[SCORE_INDEX]), reverse=True)
 
 def get_ranked_spreadsheet():
-    data = get_spreadsheet_data(RANKEADAS_SPREADSHEET_ID, 'Rank!A1:F255')
+    data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Rank!A1:F255')
     return sort_trainers(data)
 
 def get_spreadsheet_data(spreadSheetId, cellRange):
@@ -82,3 +83,7 @@ def get_spreadsheet_data(spreadSheetId, cellRange):
     values = result.get('values', [])
 
     return values
+
+def compare_insensitive(s1, s2):
+    # TODO: improve it to ignore all special characters
+    return s1.lower().replace("á", "a") == s2.lower().replace("á", "a")
