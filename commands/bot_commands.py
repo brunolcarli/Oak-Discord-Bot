@@ -2,11 +2,11 @@ from random import choice
 import discord
 from discord.ext import commands
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
-                                get_ranked_spreadsheet)
+                                get_ranked_spreadsheet, compare_insensitive)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
                             get_ability_data, ability_information)
-from settings import (LISA_URL, RANKEADAS_SPREADSHEET_ID, PONTUACAO_INDEX, NOME_SD_INDEX)
+from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX)
 import requests
 import json
 from tabulate import tabulate
@@ -148,8 +148,8 @@ async def top_ranked(ctx):
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
     
-    for trainer in data[:20]:
-        trainer = get_trainer_rank_row(trainer)        
+    for i, trainer in enumerate(data[:20], start=1):
+        trainer = get_trainer_rank_row(trainer, i)        
         table.append(trainer)
 
     output = get_table_output(table)
@@ -167,33 +167,82 @@ async def ranked_trainer(ctx, *trainer_nickname):
     trainer_nickname = ' '.join(word for word in trainer_nickname)
     trainer_data = None
     data = get_ranked_spreadsheet()
+    pos = 0
     for trainer in data:
-        if trainer[NOME_SD_INDEX] == trainer_nickname:
+        pos += 1
+        trainer_found = compare_insensitive(trainer[SD_NAME_INDEX], trainer_nickname)
+        if trainer_found:
             trainer_data = trainer
+            break
 
     if not trainer_data:
         await ctx.send('Treinador não encontrado')
         return
 
     table = get_initial_ranked_table()
-    trainer = get_trainer_rank_row(trainer_data)
+    trainer = get_trainer_rank_row(trainer_data, pos)
     table.append(trainer)
 
     output = get_table_output(table)
     await ctx.send(output)
 
+@client.command()
+async def ranked_elo(ctx, *elo_arg):
+    '''
+    Retorna todos os treinadores que estão no Rank Elo solicitado.
+    '''
+    if not elo_arg:
+        await ctx.send('Forneça um Rank Elo\nUso: `/ranked_elo <elo>`')
+        return
+
+    elo = ' '.join(word for word in elo_arg)    
+    data = get_ranked_spreadsheet()
+    table = get_initial_ranked_table()
+    
+    for i, trainer in enumerate(data, start=1):
+        rank =  get_trainer_rank(trainer[SCORE_INDEX])
+        isTargetElo = compare_insensitive(rank, elo)
+        if isTargetElo:
+            trainer = get_trainer_rank_row(trainer, i)       
+            table.append(trainer)
+    
+    # only table header
+    if len(table) == 1:
+        await ctx.send('Treinadores não encontrados para o Elo: ' + elo)
+        return
+
+    # when too big table, shows just the first 20
+    if len(table) > 20:
+        table = table[:21]
+        await ctx.send('Top 20 treinadores do Elo: ' + elo)
+    
+    output = get_table_output(table)
+    await ctx.send(output)
+        
 def get_initial_ranked_table():
     return [
-        [ 'Nick', 'Wins', 'Losses', 'Pts', 'Battles', 'Rank' ],
+        [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
     ]
 
-def get_trainer_rank_row(trainer):
-    rank =  get_trainer_rank(trainer[PONTUACAO_INDEX])
+def get_trainer_rank_row(trainer, position):    
+    # remove name and insert the position in the front
     del trainer[0]
+    trainer.insert(0, position)
+
+    # limit nick size...
+    trainer[1] = (trainer[1][:13] + '..') if len(trainer[1]) > 15 else trainer[1]
+
+    # remove losses and swap battles with points
+    del trainer[3]
+    trainer[3], trainer[4] = trainer[4], trainer[3]
+    
+    # add rank
+    rank =  get_trainer_rank(trainer[SCORE_INDEX])
     trainer.append(rank)
+    
     return trainer
 
 def get_table_output(table):
     design = 'rst'
-    response = tabulate(table, tablefmt=design)
+    response = tabulate(table, tablefmt=design, numalign="right")
     return '```{}```'.format(response)
