@@ -2,14 +2,16 @@ from random import choice
 import discord
 from discord.ext import commands
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
-                                get_ranked_spreadsheet, compare_insensitive)
+                                get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
                             get_ability_data, ability_information)
 from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX)
+from util.showdown_battle import load_battle_replay
 import requests
 import json
 from tabulate import tabulate
+import random
 
 # TODO - move this to a constants, settings or config file
 class ErrorResponses:
@@ -242,6 +244,40 @@ async def ranked_elo(ctx, *elo_arg):
     
     output = get_table_output(table)
     await ctx.send(output)
+
+@client.command()
+async def ranked_validate(ctx):
+    '''
+    Valida as entradas pendentes do formulário de registro de batalhas
+    '''
+    data = get_form_spreadsheet()
+    errors = [
+        [ "Ln.", "Error" ]
+    ]
+    ok = [ 'http://i.imgur.com/dTysUHw.jpg', 'https://media.tenor.com/images/4439cf6a16b577d81f6e06b9ba2fd278/tenor.gif', 'https://i.kym-cdn.com/photos/images/original/001/092/497/a30.jpg', 'https://i.kym-cdn.com/entries/icons/facebook/000/012/542/thumb-up-terminator_pablo_M_R.jpg', 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif' ]
+    
+    for i, row in enumerate(data, start=2):
+        result = load_battle_replay(row[4]) # 4 is the replay
+        
+        if not result.success:
+            errors.append([i, "Não foi possivel carregar o replay" ])
+            continue
+        
+        battle_result = result.battle.validate(row[2], row[3])
+        if not battle_result.success:
+            errors.append([i, battle_result.error])
+            continue
+    
+    # only table header
+    if len(errors) == 1:
+        await ctx.send('All good! ' + ok[random.randint(0, len(ok)-1)])
+        return
+
+    # when too big errors table, split into smaller data
+    chunks = [errors[x:x+10] for x in range(0, len(data), 10)]
+    for err in chunks:
+        output = get_table_output(err)
+        await ctx.send(output)
 
 def get_initial_ranked_table():
     return [
