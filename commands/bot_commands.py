@@ -18,6 +18,18 @@ class ErrorResponses:
 
 
 client = commands.Bot(command_prefix='/')
+COLOR_INDEX = 1
+ELO_IMG_INDEX = 2
+elos_map = [
+    [ "grand mestre", 0x303030, "https://uploaddeimagens.com.br/images/002/268/526/full/Grand-Mestre.png" ],
+    [ "mestre",       0x80e891, "https://uploaddeimagens.com.br/images/002/268/524/full/Mestre.png" ],
+    [ "diamante",     0x59d0e4, "https://uploaddeimagens.com.br/images/002/268/523/full/Diamante.png" ],
+    [ "platina",      0xd7d7d7, "https://uploaddeimagens.com.br/images/002/268/477/full/Platina.png" ],
+    [ "ouro",         0xbfa617, "https://uploaddeimagens.com.br/images/002/268/468/full/Ouro.png" ],
+    [ "prata",        0x8e8e8e, "https://uploaddeimagens.com.br/images/002/268/474/full/Prata.png" ],
+    [ "bronze",       0xc0702d, "https://uploaddeimagens.com.br/images/002/268/518/full/Bronze.png" ],
+    [ "retardatario", 0xb73232, "https://uploaddeimagens.com.br/images/002/268/513/full/Retardatários.png" ]
+]
 
 @client.event
 async def on_ready():
@@ -179,12 +191,24 @@ async def ranked_trainer(ctx, *trainer_nickname):
         await ctx.send('Treinador não encontrado')
         return
 
-    table = get_initial_ranked_table()
-    trainer = get_trainer_rank_row(trainer_data, pos)
-    table.append(trainer)
+    # loock-up trainer elo data
+    nick = "**__"+ trainer_data[1] +"__**"
+    elo_rank = get_trainer_rank(trainer_data[SCORE_INDEX])
+    elo = elo_rank.lower().replace("á", "a")
+    elo_data = [item for item in elos_map if item[0] == elo][0]
 
-    output = get_table_output(table)
-    await ctx.send(output)
+    # setup embed data
+    embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
+    embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
+    
+    embed.add_field(name="Pos", value=pos, inline=True)
+    embed.add_field(name="Elo", value=elo_rank, inline=True)
+    embed.add_field(name="Wins", value=trainer_data[2], inline=True)
+    embed.add_field(name="Losses", value=trainer_data[3], inline=True)
+    embed.add_field(name="Battles", value=trainer_data[5], inline=True)
+    embed.add_field(name="Points", value=trainer_data[4], inline=True)
+    
+    await ctx.send(nick, embed=embed)
 
 @client.command()
 async def ranked_elo(ctx, *elo_arg):
@@ -195,7 +219,7 @@ async def ranked_elo(ctx, *elo_arg):
         await ctx.send('Forneça um Rank Elo\nUso: `/ranked_elo <elo>`')
         return
 
-    elo = ' '.join(word for word in elo_arg)    
+    elo = ' '.join(word for word in elo_arg)
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
     
@@ -218,7 +242,7 @@ async def ranked_elo(ctx, *elo_arg):
     
     output = get_table_output(table)
     await ctx.send(output)
-        
+
 def get_initial_ranked_table():
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
