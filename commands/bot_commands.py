@@ -6,7 +6,7 @@ from util.general_tools import (get_similar_pokemon, get_trainer_rank,
 from util.get_api_data import (dex_information, get_pokemon_data, 
                             get_item_data, item_information,
                             get_ability_data, ability_information)
-from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX)
+from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL)
 from util.showdown_battle import load_battle_replay
 import requests
 import json
@@ -250,6 +250,9 @@ async def ranked_validate(ctx):
     '''
     Valida as entradas pendentes do formulário de registro de batalhas
     '''
+    if ctx.message.channel.name != ADMIN_CHANNEL:
+        return
+
     data = get_form_spreadsheet()
     errors = [
         [ "Ln.", "Error" ]
@@ -270,7 +273,7 @@ async def ranked_validate(ctx):
     
     # only table header
     if len(errors) == 1:
-        await ctx.send('All good! ' + ok[random.randint(0, len(ok)-1)])
+        await ctx.send('All good! 👍 ' + ok[random.randint(0, len(ok)-1)])
         return
 
     # when too big errors table, split into smaller data
