@@ -71,6 +71,10 @@ def get_ranked_spreadsheet():
     data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Rank!A1:F255')
     return sort_trainers(data)
 
+def get_form_spreadsheet():
+    data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Respostas ao formulário 2!A2:E255')
+    return data
+
 def get_spreadsheet_data(spreadSheetId, cellRange):
     scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     creds = ServiceAccountCredentials.from_json_keyfile_name(
