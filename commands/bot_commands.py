@@ -1,6 +1,7 @@
 from random import choice
 import discord
 from discord.ext import commands
+from discord.utils import get
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive)
 from util.get_api_data import (dex_information, get_pokemon_data, 
@@ -158,16 +159,27 @@ async def gugasaur(ctx):
     await ctx.send(response)
 
 @client.command()
-async def top_ranked(ctx):
+async def top_ranked(ctx, *args):
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
     
+    view_types = [
+        [ "list", "lista", "elos" ],
+        [ "table", "tabela" ]
+    ]
+    is_list = len(args) > 0 and args[0].strip().lower() in view_types[0]
+
     for i, trainer in enumerate(data[:20], start=1):
-        trainer = get_trainer_rank_row(trainer, i)        
+        trainer = get_trainer_rank_row(trainer, i)
         table.append(trainer)
 
-    output = get_table_output(table)
-    await ctx.send(output)
+    if is_list:
+        descript = "**__Top Players__**"
+        output = get_embed_output(table) 
+        await ctx.send(descript, embed=output)
+    else:
+        output = get_table_output(table)
+        await ctx.send(output)
 
 @client.command()
 async def ranked_trainer(ctx, *trainer_nickname):
@@ -282,6 +294,32 @@ async def ranked_validate(ctx):
         output = get_table_output(err)
         await ctx.send(output)
 
+@client.command()
+async def test(ctx, *args):
+    emoji_list = [
+        get(client.emojis, name='ouro'),
+        get(client.emojis, name='prata'),
+        get(client.emojis, name='bronze')
+    ]
+
+    if len(args) == 0 or args[0].strip().lower() != "lista":
+        return
+    
+    # setup embed data
+    elo_data = [item for item in elos_map if item[0] == "ouro"][0]
+    embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
+    # embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
+    
+    for i in range(1, 10):
+        emoji = emoji_list[random.randint(0, len(emoji_list)-1)]
+        title = "{0} {1}º - {2}".format(str(emoji), str(i), "Charizardison")
+        details = "Bts: `{0}` | Wins: `{1}` | Pts: `{2}`".format("10", "9", "99")
+        embed.add_field(name=title, value=details, inline=True)
+
+    descript = "**__Top Players__**"
+    await ctx.send(descript, embed=embed)
+
+
 def get_initial_ranked_table():
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
@@ -309,3 +347,21 @@ def get_table_output(table):
     design = 'rst'
     response = tabulate(table, tablefmt=design, numalign="right")
     return '```{}```'.format(response)
+
+def get_embed_output(ranked_table):
+    rank_index = ranked_table[0].index("Rank")
+    trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
+    pts_size = len(str(ranked_table[1][4]))
+    
+    embed = discord.Embed(color=trainer1_elo_data[COLOR_INDEX], type="rich")
+    embed.set_thumbnail(url="https://uploaddeimagens.com.br/images/002/296/393/original/abp_logo.png")
+    
+    for i, trainer in enumerate(ranked_table[1:21], start=1):
+        elo = trainer[rank_index].lower().replace("á", "a")
+        emoji = get(client.emojis, name=elo)
+
+        title = "{0} {1}º - {2}".format(str(emoji), str(i), trainer[1])
+        details = "Wins: `{0:0>3}` | Bts: `{1:0>3}` | Pts: **`{2:0>{pts_size}}`**".format(trainer[2], trainer[3], trainer[4], pts_size=pts_size)
+        embed.add_field(name=title, value=details, inline=True)
+
+    return embed
