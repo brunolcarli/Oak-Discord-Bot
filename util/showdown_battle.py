@@ -13,12 +13,14 @@ class Battle:
         self.date = date
         self.meta_format = meta_format
 
-    def validate(self, winner, loser):
+    def validate(self, winner, loser, date):
         winnerOK = winner.strip().lower() == self.winner.lower()
         loserOK  = loser.strip().lower()  == self.loser.lower()
+        dateOk   = abs(date - self.date).days <= 2
 
         error  = "Winner is not valid; " if not winnerOK else ""
         error += "Loser is not valid; "  if not loserOK  else ""
+        error += "Date is not valid; "   if not dateOk   else ""
         
         return OperationResult(error=error)
 

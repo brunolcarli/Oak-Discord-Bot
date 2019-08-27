@@ -2,17 +2,19 @@ from random import choice
 import discord
 from discord.ext import commands
 from discord.utils import get
+from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL)
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive)
 from util.get_api_data import (dex_information, get_pokemon_data, 
-                            get_item_data, item_information,
-                            get_ability_data, ability_information)
-from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL)
+                               get_item_data, item_information,
+                               get_ability_data, ability_information)
 from util.showdown_battle import load_battle_replay
+from util.elos import (Elos, get_elo, validate_elo_battle)
 import requests
 import json
 from tabulate import tabulate
 import random
+from datetime import datetime
 
 # TODO - move this to a constants, settings or config file
 class ErrorResponses:
@@ -191,23 +193,15 @@ async def ranked_trainer(ctx, *trainer_nickname):
         return
     
     trainer_nickname = ' '.join(word for word in trainer_nickname)
-    trainer_data = None
-    data = get_ranked_spreadsheet()
-    pos = 0
-    for trainer in data:
-        pos += 1
-        trainer_found = compare_insensitive(trainer[SD_NAME_INDEX], trainer_nickname)
-        if trainer_found:
-            trainer_data = trainer
-            break
+    trainer = find_trainer(trainer_nickname)
 
-    if not trainer_data:
+    if not trainer:
         await ctx.send('Treinador não encontrado')
         return
 
     # loock-up trainer elo data
-    nick = "**__"+ trainer_data[1] +"__**"
-    elo_rank = get_trainer_rank(trainer_data[SCORE_INDEX])
+    nick = "**__"+ trainer[1] +"__**"
+    elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
     elo = elo_rank.lower().replace("á", "a")
     elo_data = [item for item in elos_map if item[0] == elo][0]
 
@@ -215,12 +209,12 @@ async def ranked_trainer(ctx, *trainer_nickname):
     embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
     embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
     
-    embed.add_field(name="Pos", value=pos, inline=True)
+    embed.add_field(name="Pos", value=trainer[6], inline=True)
     embed.add_field(name="Elo", value=elo_rank, inline=True)
-    embed.add_field(name="Wins", value=trainer_data[2], inline=True)
-    embed.add_field(name="Losses", value=trainer_data[3], inline=True)
-    embed.add_field(name="Battles", value=trainer_data[5], inline=True)
-    embed.add_field(name="Points", value=trainer_data[4], inline=True)
+    embed.add_field(name="Wins", value=trainer[2], inline=True)
+    embed.add_field(name="Losses", value=trainer[3], inline=True)
+    embed.add_field(name="Battles", value=trainer[5], inline=True)
+    embed.add_field(name="Points", value=trainer[4], inline=True)
     
     await ctx.send(nick, embed=embed)
 
@@ -266,64 +260,69 @@ async def ranked_validate(ctx):
         return
 
     data = get_form_spreadsheet()
+    ranked_data = get_ranked_spreadsheet()
     errors = [
         [ "Ln.", "Error" ]
     ]
     ok = [ 'http://i.imgur.com/dTysUHw.jpg', 'https://media.tenor.com/images/4439cf6a16b577d81f6e06b9ba2fd278/tenor.gif', 'https://i.kym-cdn.com/photos/images/original/001/092/497/a30.jpg', 'https://i.kym-cdn.com/entries/icons/facebook/000/012/542/thumb-up-terminator_pablo_M_R.jpg', 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif' ]
     
     for i, row in enumerate(data, start=2):
-        result = load_battle_replay(row[4]) # 4 is the replay
+        # validate trainers
+        trainers_result = ""
+        winner_data = find_trainer(row[2], ranked_data)
+        loser_data  = find_trainer(row[3], ranked_data)
+        if winner_data == None: trainers_result += "Winner not found; "
+        if loser_data  == None: trainers_result += "Loser not found; "
+        if trainers_result != "":
+            errors.append([i, trainers_result])
+            continue
+
+        # validate elos
+        winner_elo  = get_elo(get_trainer_rank(winner_data[SCORE_INDEX]))
+        loser_elo   = get_elo(get_trainer_rank(loser_data[SCORE_INDEX]))
+        valid_elos  = validate_elo_battle(winner_elo, loser_elo)
+        if not valid_elos:
+            errors.append([i, "Invalid elos matchup ({} vs {})".format(winner_elo.name, loser_elo.name)])
+            continue
         
+        # validate showdown replay
+        result = load_battle_replay(row[4]) # 4 is the replay
         if not result.success:
             errors.append([i, "Não foi possivel carregar o replay" ])
             continue
         
-        battle_result = result.battle.validate(row[2], row[3])
+        # validate replay metadata
+        battle_result = result.battle.validate(row[2], row[3], datetime.strptime(row[0], "%d/%m/%Y %H:%M:%S"))
         if not battle_result.success:
             errors.append([i, battle_result.error])
-            continue
-    
+
     # only table header
     if len(errors) == 1:
         await ctx.send('All good! 👍 ' + ok[random.randint(0, len(ok)-1)])
         return
 
     # when too big errors table, split into smaller data
-    chunks = [errors[x:x+10] for x in range(0, len(data), 10)]
+    chunks = [errors[x:x+10] for x in range(0, len(errors), 10)]
     for err in chunks:
         output = get_table_output(err)
         await ctx.send(output)
-
-@client.command()
-async def test(ctx, *args):
-    emoji_list = [
-        get(client.emojis, name='ouro'),
-        get(client.emojis, name='prata'),
-        get(client.emojis, name='bronze')
-    ]
-
-    if len(args) == 0 or args[0].strip().lower() != "lista":
-        return
-    
-    # setup embed data
-    elo_data = [item for item in elos_map if item[0] == "ouro"][0]
-    embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
-    # embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
-    
-    for i in range(1, 10):
-        emoji = emoji_list[random.randint(0, len(emoji_list)-1)]
-        title = "{0} {1}º - {2}".format(str(emoji), str(i), "Charizardison")
-        details = "Bts: `{0}` | Wins: `{1}` | Pts: `{2}`".format("10", "9", "99")
-        embed.add_field(name=title, value=details, inline=True)
-
-    descript = "**__Top Players__**"
-    await ctx.send(descript, embed=embed)
-
 
 def get_initial_ranked_table():
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
     ]
+
+def find_trainer(trainer_nickname, data = None):
+    data = data if data != None else get_ranked_spreadsheet()
+    pos = 0
+    for trainer in data:
+        pos += 1
+        trainer_found = compare_insensitive(trainer[SD_NAME_INDEX], trainer_nickname)
+        if trainer_found:
+            trainer.append(pos)
+            return trainer
+
+    return None
 
 def get_trainer_rank_row(trainer, position):    
     # remove name and insert the position in the front
