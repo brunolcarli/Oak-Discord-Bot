@@ -14,8 +14,8 @@ class Battle:
         self.meta_format = meta_format
 
     def validate(self, winner, loser):
-        winnerOK = winner.lower()  == self.winner.lower()
-        loserOK  = loser.lower() == self.loser.lower()
+        winnerOK = winner.strip().lower() == self.winner.lower()
+        loserOK  = loser.strip().lower()  == self.loser.lower()
 
         error  = "Winner is not valid; " if not winnerOK else ""
         error += "Loser is not valid; "  if not loserOK  else ""
@@ -33,11 +33,11 @@ class OperationResult:
         self.error = error
 
 def load_battle_replay(battle_url): 
-    isShowdownReplay = battle_url.find('://replay.pokemonshowdown.com/') > -1
+    isShowdownReplay = battle_url.strip().find('://replay.pokemonshowdown.com/') > -1
     if not isShowdownReplay:        
         return OperationResult(error="Battle URL is not a valid Showdown battle replay")
     
-    battle_metadata_url = battle_url + ".json"
+    battle_metadata_url = battle_url.strip() + ".json"
     response = requests.get(url = battle_metadata_url)
 
     if response.status_code != 200:
