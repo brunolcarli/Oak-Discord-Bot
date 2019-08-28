@@ -90,4 +90,4 @@ def get_spreadsheet_data(spreadSheetId, cellRange):
 
 def compare_insensitive(s1, s2):
     # TODO: improve it to ignore all special characters
-    return s1.lower().replace("á", "a") == s2.lower().replace("á", "a")
+    return s1.strip().lower().replace("á", "a") == s2.strip().lower().replace("á", "a")
