@@ -3,9 +3,15 @@ Módulo para ferramentas genéricas.
 '''
 import difflib
 import string
+import discord
+from discord.utils import get
+from tabulate import tabulate
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
-from settings import (RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX)
+from settings import (RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX,
+                    COLOR_INDEX)
+from util.elos import ELOS_MAP
+
 
 def get_similar_pokemon(pokemon):
     '''
@@ -93,17 +99,18 @@ def compare_insensitive(s1, s2):
     return s1.strip().lower().replace("á", "a") == s2.strip().lower().replace("á", "a")
 
 
-def get_embed_output(ranked_table):
+def get_embed_output(ranked_table, client):
     """
     Processa uma mensagem embed bonita e formatada.
 
     param : ranked_table : <list> :
+    param : client : Bot client instance :
 
     return : <class 'discord.embeds.Embed'> :
     """
 
     rank_index = ranked_table[0].index("Rank")
-    trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
+    trainer1_elo_data = [item for item in ELOS_MAP if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
     pts_size = len(str(ranked_table[1][4]))
     
     embed = discord.Embed(color=trainer1_elo_data[COLOR_INDEX], type="rich")
@@ -118,3 +125,24 @@ def get_embed_output(ranked_table):
         embed.add_field(name=title, value=details, inline=True)
 
     return embed
+
+def get_table_output(table):
+    """
+    Formata uma tabela com a lib tabulate, retornando a tabela formatada
+    dentro de um bloco de código de Markdown.
+    Exemplo:
+    ```
+        ===  ===============  ====  ===  ===  ========
+        MARKDOWN CODE BLOCK WITHIN A TABULATE TABLE
+        ===  ===============  ====  ===  ===  ========
+    ```
+
+    param : table : <list> :
+
+    return : <str> :
+    """
+    design = 'rst'
+    response = tabulate(table, tablefmt=design, numalign="right")
+
+    return '```{}```'.format(response)
+

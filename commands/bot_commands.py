@@ -9,17 +9,17 @@ from random import choice
 import discord
 from discord.ext import commands
 from discord.utils import get
-from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL)
+from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL, COLOR_INDEX, ELO_IMG_INDEX)
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
-                                get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive, get_embed_output)
+                                get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive, get_embed_output,
+                                get_table_output)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                                get_item_data, item_information,
                                get_ability_data, ability_information)
 from util.showdown_battle import load_battle_replay
-from util.elos import (Elos, get_elo, validate_elo_battle)
+from util.elos import (Elos, get_elo, validate_elo_battle, ELOS_MAP)
 import requests
 import json
-from tabulate import tabulate
 import random
 from datetime import datetime
 
@@ -30,20 +30,9 @@ class ErrorResponses:
 
 
 client = commands.Bot(command_prefix='/')
-COLOR_INDEX = 1
-ELO_IMG_INDEX = 2
+
 
 # TODO move this to another module. Declare within a set/tuple in UPPER_CASE
-elos_map = [
-    [ "grand mestre", 0x303030, "https://lh3.googleusercontent.com/q7DbMaDc-E0fpgBGy8-B4cvjJ-CTSuCuNYUU1BTLNVtb60vpmTBA0atUKnYmMMzbSgmZdx9t9WwbtI5dtXiEqqqKA9EyHDK7QC_RTI3psIuM0a5xxZJTcwn4EAq6vz_xEJEMdRn5On8HbnFqemtA_O8CYQhHntyAT97j6zseTncL0UT5hC_Qb6ZLqiEcvhNawAJgz2dbfEjvq1z-KmYEc7kU-i6ko9bgChwm1NSUTGSSp96Rkg0qJO7uptGCjUuvkNl9Jfev4HJDa9JgC6rtQMPRXZUCJ46ncAaPcyToyaVi1aj1szhSo5t3taMYLGJeNJJ-Ig125ukLkK9LvOblFYngvx0xpdlk_G4rKLRZRvLbtE2T3z9fmZzrJ8vhIsdEsj1mdKsB9tGn9r1ZIIjJaeFZLGcZXXlvFnytiOhIgYeHJbInils3L5ufVJNdynC5-W8Bckm7fpgVmtbHz-LVu4BOjG1T6QTxwahmivWxU6kst-QKPNoJE2WNejHSWxpu6Zx5wGqlPndilJfdrw6LoKGzV3aoM3m2W9swJKzpAPjWBcsEW-qGbPzCD1DBRklRgUmhSV5ejoiGcbRfcgcgPGmO-a7PFeg22SnYJKy0E9mwSiTLSSu__cGg-EQiQQZ11zD2XjrGbGX9oEN5umuzOYE47qLuQAutSbafrH7_VcG4bfJt-7UpTvfg9heGzoVIpeI2asUTJXRINwCgKgaRdlw=w857-h858-no" ],
-    [ "mestre",       0x80e891, "https://lh3.googleusercontent.com/AiSEFZIbBlprCeSw2tC7Wa3_FsU17T3JOQ3WRXnkzSrgK4kcNZposVAGW0EVOd2BFh1R7ggxvyliYTL1Aa2Tl2zkVtlIFYfsJs3Ses1WVu0TQ_9uMlyp76n4sqndeNuZivqU5bw7oAwxbr5wdoCdtJpcFgXoC81XFLkQjhhdSrsKxpNN-SO30oo7Nq-4mxR3FGE1Tb6ujYa-3eCQmidxMJ5DXgDwzg2TLClQFwDeuf1MFtRYMWbXjBXJCS4hbsqufEVnDprbyiWoJsK1RejH4hAPgP4b0WnO0qheX-ewEcPM-BsLVrOm3eti4At7729eSlxQEj0C8hVGcSzX-gLiq8TrbDJDu6NuTFLDfd9JbZYR9LAtTZ4DoM0muA7twY515sQhTaX-SknbrrrjSYOzKqSt-LPi-HM-tICkBWDRy97Gb0rhHRqnblEQv4WhSfCxybv8vsMz9yUrwy53niUIrX6WSB1_V8k5ihMph529gnITRQKWEnIwvqFg37kZzZ5ImUqOiNGXEuKUV9hGbqGgKNTEyq5Cauy_zunJIp5zT9KJfV0XVF7A3lM5gjNeWwMkP-O-LG4qjlbyPlJWnkfbYVMpWY04FLiun_QB67-0O_ypAz8lw0zWEn9eU3KPwAkBI88vTTDdY1dghIKdgWDTAsxsOuUXCA7Yf5-pjI61v4UOFRTQeXxMPNEzU3WLRvn8WEpwbu4f9b2kkcomxBHEB0Q=s834-no" ],
-    [ "diamante",     0x59d0e4, "https://uploaddeimagens.com.br/images/002/278/683/original/Diamante.png" ],
-    [ "platina",      0xd7d7d7, "https://lh3.googleusercontent.com/hQifT74Pr0Trza6dQ3_ERzc_ZXkpqjdGTny2uiEUzg_iknxql4ArzmF4aUPiLplcHTbQBuV9lF8qkuU4ZxfDzjVwWk_MDQrZe5D35zwqjtsJIsgP4KRiOwXGkv5RbmxwPnW6w24fvewbViVRWeIUioFz-M2yImPfBEcUmOwF8WCvDw17BnxiHkTjRZkl-N3U1ZG_gqf8jWqUXIPssuJDtVyMkiKp8eixtxyYj_OC-gf5LlaLv4UQdonAeYt20MtpNuPa6r_-wXQ09zM8xv-oWeDnSdrqdRbcZ1JmtmkjaJQpgPdRJ9nt-mg39WxM58avap6kCVlvqwSeB-oX9_eJF_wOex1nnKK0CC06RksUc9FshiN3CRA9ekW8FOzfq0L9ufREGJkgjrRzRnc-A-D8cvLpgAXg6Sa54Q8rwxq-3ojGwPWB_xtFz_1LoPPO4J1ZCocQoheNZnrMifqbXJyQ0i9ce6MZ6fOmUnrdBcZxsyOsh16skzocDRI2XFO2krsgi1I4kSTbHhCS3VkWwOYeRr_EUMr9MZ7xWmqDH3jI7DNjHnbyKkTjsz6Nj3kTsb8a9GJzDjqvExXd6JYsB8OTjy3DtRVFKR5THLfO4d8FryQjnCQY6uJBYduu0t4e6ACKmoh0Ladu2ywQQHG0-EwYDQ6ioYx2DpRUIMB8FAWnN2eMDlafF0BU5Ob0AduV2cKznM47eZCM5yf592n5jl70QwM=s834-no" ],
-    [ "ouro",         0xbfa617, "https://lh3.googleusercontent.com/rENAkMDu3Mdgi_l0XH2anhKmAVAYmVEBJvxnos8XJGu-WXOKH5akOvHoqntNj4Vz6MxKjAWA6mGxpT9Uo2aq6TpY-vZax_zLawXX5kNlIEkePaIMiMVaF_LJYgUdXqEoZ4U_MlDK9_Au7kHS_bPJugNho0saBdS0Bz2kG0idwRPlUozKEIycLMlrwb9x9Cjqci_b7tyHk_zHU6e5GdDwpzi9KPgP0LEss9j6qorFBvwKUx0CLyQ5zK7Nhj3F4OjZvUEFf6NVKrl-sZrua3eYbY7gbUAPKp20vIY7c3YbNbfWRO6G3doyAGyRUM2XBp3s9c5G2bBGobpjXoabA6HEKscnTWRr2JIdrkvXPUorYRmnekXgXLhL_OWn_ADhL38aMltIV5GnW8FfeoP5aQEGmGlaC0lQJWxU09eT4_eaEKDwqUqBAbjhTy2iB8ggHSqh1N7qYnTcSuhvulHwb_Gnm-NQYuf1heyq9vVxh4Caran6EcnD-FRXZ1Dj4ddaU_ZIoow05Fvl23Kr4LZ1bZ7_6kc1szxce3IbM2BRxTRDzZ6IKOuCx9c9Ttn3rDiRKJB6-14cNjaQHtQ269cie7bV0X5JyRy7sMma5inNmeAeF7PFTpspg9ePOBYerndbOcaAlXE36RRAM2Yqp8Q_n3PUd5FSW922M13pNQjTk5OIrT0e4nPFqtHmnH0aUp0PgjhtiTSYDqwuesLVZYgcY--fpS8=s834-no" ],
-    [ "prata",        0x8e8e8e, "https://lh3.googleusercontent.com/5l38BR08J-lJCQkRuXn69t4qbDZmOZM9yk0sMZzAdO4SY0FVa0KP127rrnsd2OUV-SDzkmySHyRuQjoRzcWRt35XEM-q091anUcVTple-fyAaBc26JFFBI9z4ycz2V5IFx8KgrXWMkKHRsB4hKYS_sl1tQtS9HT7Vak9kd5CgafkHoTvogNu3rE_taXfsePJrRYemNWxoe_tMZ0rtZgxNQ1OKqtBf3Kgak1KIF0XlVBx8ZQdxzadSk0yuNT6wANOa58aAxmgizLeliPSbWm7QcrJyzotcliMbYUs73lU_kf7NYVcL1109cRcGq5NgXM8MH81VDKI2cGpz1Phj51Htzl9R4FuSXKPqdh4fiSUwYI9V-rpoc9sA5NkOsAznr13jlYqMF_cMLB8885E3QmMxsaR0YDq28QrMucB5Uq0NXqQdDPA7-4bF8DI4uK9cP6nOD7ehaDf_nsb2o8YvI_pjpRooSKM9D0bGLi6-vj7cwNsmkiK7WGp0-xiYhQZVKf3zZUth2ZHsKnTpR6XobKMhky-Lfe9Z4GvqwPk3IhZUg6YvMQD61mg4X3rkYvujtQgbCbC0Wrj4_-ZOJ0_pV-Hs5QC_mJrRnY-SxJG9pYD6S0qrQmVqd-sytllP2d3LwRhdckrYd9l6aTa3oahS9hg55wC9SIeVtyjUy8EHjzxlcOdAqXfGutX42eKPa4D206wiTbLY0HHwKNf7fiBogyCILQ=w841-h834-no" ],
-    [ "bronze",       0xc0702d, "https://lh3.googleusercontent.com/xuxJIlFO7v9X1-CBgyTEfTAsRqLqjGXE_z8Po1KroHuvhs4JsP0IpzJ_SsqBAC33_3SnBErojk0C8wViI4rmVwi3Dlz644wyHTIRF3GDz1hUMDib4poKcJ4N46syMuyT_9iKmzRfYT_Maz0o-uq4t0-yBrzAroihDIb4X5eexKEwPOTajBngQFOx_AzH1TA7M846deV92BpbNi7VisHq2NB_eaZVf1cVrwU__dX-pr0aEn_RCPCZduyq14mNo0-TrOIKyV6zXZY6Rhd9WaD4nO9qSrp-2DSg0dn0rSocsSOPeSpac75izEh49zt1ld1e3FQtnh_HTasQf4OXdPo8QinThjL8C12KkiqfLsmUMmE12pq24B5zGndslw9Xmz-NE9-99Tp5HvA9-tZe13wqqSCpXpN8ua1vWTrLcveh9W47QPR-gzK9xkjKQbbyNF9Etp35TxESVCBzYGngddvcTunZGdrZa_pAA0_1ALC1nEZ_Hr5ps3s97RyGLT5tId9mHygBnoej6GEcpL2Iirk1ktsksrsL2xTdw0I0rzUbLlkKZHbfg5OVjVc32qKQ1Vl5yPeIsjudSC64hmhn-vWK2GCoZMdblNwigV9ECLVwMwiU3mVwDoBkXgxK_NFL_YDogt66FnLLfbnLjM4cx8hWlP18dmmfEWy6OuqRIlZ92ESSc8bOtzyZbHNKgjyKRh5as_1RlLWmAIugOhD-m3eVdArN=w829-h834-no" ],
-    [ "retardatario", 0xb73232, "https://lh3.googleusercontent.com/pFWZesmDmhDYx2nk_Fb1ziuPxCSsC4nq7fAXvNfjpWcHcSspMazQhrvJirYwYTtrTL36zRYuX1jSObDhEXjURxd3oCrGk8dBKexrLOLBTDgJTWzXygiR6htlvhkNpPob8Lr9aoBeg8M-DIJdEZUV5PfkCRmZPvhiz1QBZgKAWdTserRbSR5ZEyboUaCS7lQVydv2b0r1YXavv6uF9VaXUbMPJM_Q0ChIbwTz23s9aaa_L0g4ffJHs2RxLvwwNfwnGISTXN-QD47Gfk3Y_HKLVD7-nF3I-ubQnRSz8GY_nDSe1nbm6gbZQ-nzpSZHxDfLQK2pYRMLGCy1l3beX0HC5nNt7PpeRKH94DdvKgTrxv9cHBK1eVDV0aBOoSQEvT3rh8ja_dyiO6ABcuWPVzNno5KLDe6g1GcOPQWKI8FVoz5iibn7Y4GAE5QWxR1FHulyNHQMFfzAljPaUFG9q1ZRYZNaMWNKEXj4FV9FQjk3xFnGBsYaMuJWJW3VWsFWSBT3-m4XRRdFXPTjZA1GSQlKxcnyPI6dM_ZjmMpPjdG1z12LfKMA7fHuHtmWLfdaD23vrr7ucsr7mYB83YIq2iJqdlZPIhwua91uiucefW_KjY1cHyoSw4Y2Cu04mmZU3AsEvPsavx9MVAqMU6N4xvgl3rlfWsFK2kulR6GY35GcktSIYL8zfjzfghgtiwlFAoDFe3L8_Y7GMgEFqUxp2zG0XO4=w832-h834-no" ]
-]
 
 @client.event
 async def on_ready():
@@ -199,7 +188,7 @@ async def top_ranked(ctx, *args):
 
     if is_list:
         descript = "**__Top Players__**"
-        output = get_embed_output(table) 
+        output = get_embed_output(table, client)
         await ctx.send(descript, embed=output)
     else:
         output = get_table_output(table)
@@ -225,7 +214,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
     nick = "**__"+ trainer[1] +"__**"
     elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
     elo = elo_rank.lower().replace("á", "a")
-    elo_data = [item for item in elos_map if item[0] == elo][0]
+    elo_data = [item for item in ELOS_MAP if item[0] == elo][0]
 
     # setup embed data
     embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
@@ -391,24 +380,3 @@ def get_trainer_rank_row(trainer, position):
     trainer.append(rank)
     
     return trainer
-
-# TODO move this to an util or tools dedicated module
-def get_table_output(table):
-    """
-    Formata uma tabela com a lib tabulate, retornando a tabela formatada
-    dentro de um bloco de código de Markdown.
-    Exemplo:
-    ```
-        ===  ===============  ====  ===  ===  ========
-        MARKDOWN CODE BLOCK WITHIN A TABULATE TABLE
-        ===  ===============  ====  ===  ===  ========
-    ```
-
-    param : table : <list> :
-
-    return : <str> :
-    """
-    design = 'rst'
-    response = tabulate(table, tablefmt=design, numalign="right")
-
-    return '```{}```'.format(response)
