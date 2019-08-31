@@ -146,3 +146,30 @@ def get_table_output(table):
 
     return '```{}```'.format(response)
 
+def get_trainer_rank_row(trainer, position):
+    """
+    Busca na planilha da Ranked a linha de dados contendo a informação
+    do treinador, retornando um vetor de dados atualizados do treinador.
+
+    param : trainer : <list> :
+    param : position : <int> :
+
+    return : <list> :
+    """
+
+    # remove name and insert the position in the front
+    del trainer[0]
+    trainer.insert(0, position)
+
+    # limit nick size...
+    trainer[1] = (trainer[1][:13] + '..') if len(trainer[1]) > 15 else trainer[1]
+
+    # remove losses and swap battles with points
+    del trainer[3]
+    trainer[3], trainer[4] = trainer[4], trainer[3]
+    
+    # add rank
+    rank =  get_trainer_rank(trainer[SCORE_INDEX])
+    trainer.append(rank)
+    
+    return trainer

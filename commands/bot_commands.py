@@ -12,7 +12,7 @@ from discord.utils import get
 from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL, COLOR_INDEX, ELO_IMG_INDEX)
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive, get_embed_output,
-                                get_table_output)
+                                get_table_output, get_trainer_rank_row)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                                get_item_data, item_information,
                                get_ability_data, ability_information)
@@ -351,32 +351,3 @@ def find_trainer(trainer_nickname, data = None):
             return trainer
 
     return None
-
-# TODO move this to an util or tools dedicated module
-def get_trainer_rank_row(trainer, position):
-    """
-    Busca na planilha da Ranked a linha de dados contendo a informação
-    do treinador, retornando um vetor de dados atualizados do treinador.
-
-    param : trainer : <list> :
-    param : position : <int> :
-
-    return : <list> :
-    """
-
-    # remove name and insert the position in the front
-    del trainer[0]
-    trainer.insert(0, position)
-
-    # limit nick size...
-    trainer[1] = (trainer[1][:13] + '..') if len(trainer[1]) > 15 else trainer[1]
-
-    # remove losses and swap battles with points
-    del trainer[3]
-    trainer[3], trainer[4] = trainer[4], trainer[3]
-    
-    # add rank
-    rank =  get_trainer_rank(trainer[SCORE_INDEX])
-    trainer.append(rank)
-    
-    return trainer
