@@ -67,6 +67,8 @@ settings.json
 
 # general
 script.txt
-.vscode/launch.json
-.vscode/tasks.json
+.vscode/
 .env
+oak_ss_api_keys.json
+oak_ss_api_keys-2.json
+

@@ -2,8 +2,10 @@
 Módulo para ferramentas genéricas.
 '''
 import difflib
-import gspread
+import string
 from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build
+from settings import (RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX)
 
 def get_similar_pokemon(pokemon):
     '''
@@ -54,28 +56,38 @@ def get_trainer_rank(pts):
 def sort_trainers(data):
     '''
     ordena uma lista filtrada de trainers pelos pontos.
-    '''
+    '''    
     trainers = []
     for trainer in data:
         try:
-            trainer_has_points = int(trainer.get('Pontuação'))
+            trainer_has_points = int(trainer[SCORE_INDEX])
         except ValueError:
             pass
         else:
             trainers.append(trainer)
-    return sorted(trainers, key=lambda i: int(i['Pontuação']), reverse=True)
+    return sorted(trainers, key=lambda i: int(i[SCORE_INDEX]), reverse=True)
 
 def get_ranked_spreadsheet():
-    scope = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/drive'
-    ]
+    data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Rank!A1:F255')
+    return sort_trainers(data)
+
+def get_form_spreadsheet():
+    data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Respostas ao formulário 2!A2:E255')
+    return data
+
+def get_spreadsheet_data(spreadSheetId, cellRange):
+    scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     creds = ServiceAccountCredentials.from_json_keyfile_name(
         'oak_ss_api_keys.json',
         scope
     )
-    client = gspread.authorize(creds)
-    sheet = client.open('Rankeadas ABP').sheet1
+    service = build('sheets', 'v4', credentials=creds)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=spreadSheetId, range=cellRange).execute()
+    values = result.get('values', [])
 
-    data = sheet.get_all_records()
-    return sort_trainers(data)
+    return values
+
+def compare_insensitive(s1, s2):
+    # TODO: improve it to ignore all special characters
+    return s1.strip().lower().replace("á", "a") == s2.strip().lower().replace("á", "a")
