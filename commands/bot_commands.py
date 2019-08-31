@@ -25,6 +25,8 @@ class ErrorResponses:
 client = commands.Bot(command_prefix='/')
 COLOR_INDEX = 1
 ELO_IMG_INDEX = 2
+
+# TODO move this to another module. Declare within a set/tuple in UPPER_CASE
 elos_map = [
     [ "grand mestre", 0x303030, "https://lh3.googleusercontent.com/q7DbMaDc-E0fpgBGy8-B4cvjJ-CTSuCuNYUU1BTLNVtb60vpmTBA0atUKnYmMMzbSgmZdx9t9WwbtI5dtXiEqqqKA9EyHDK7QC_RTI3psIuM0a5xxZJTcwn4EAq6vz_xEJEMdRn5On8HbnFqemtA_O8CYQhHntyAT97j6zseTncL0UT5hC_Qb6ZLqiEcvhNawAJgz2dbfEjvq1z-KmYEc7kU-i6ko9bgChwm1NSUTGSSp96Rkg0qJO7uptGCjUuvkNl9Jfev4HJDa9JgC6rtQMPRXZUCJ46ncAaPcyToyaVi1aj1szhSo5t3taMYLGJeNJJ-Ig125ukLkK9LvOblFYngvx0xpdlk_G4rKLRZRvLbtE2T3z9fmZzrJ8vhIsdEsj1mdKsB9tGn9r1ZIIjJaeFZLGcZXXlvFnytiOhIgYeHJbInils3L5ufVJNdynC5-W8Bckm7fpgVmtbHz-LVu4BOjG1T6QTxwahmivWxU6kst-QKPNoJE2WNejHSWxpu6Zx5wGqlPndilJfdrw6LoKGzV3aoM3m2W9swJKzpAPjWBcsEW-qGbPzCD1DBRklRgUmhSV5ejoiGcbRfcgcgPGmO-a7PFeg22SnYJKy0E9mwSiTLSSu__cGg-EQiQQZ11zD2XjrGbGX9oEN5umuzOYE47qLuQAutSbafrH7_VcG4bfJt-7UpTvfg9heGzoVIpeI2asUTJXRINwCgKgaRdlw=w857-h858-no" ],
     [ "mestre",       0x80e891, "https://lh3.googleusercontent.com/AiSEFZIbBlprCeSw2tC7Wa3_FsU17T3JOQ3WRXnkzSrgK4kcNZposVAGW0EVOd2BFh1R7ggxvyliYTL1Aa2Tl2zkVtlIFYfsJs3Ses1WVu0TQ_9uMlyp76n4sqndeNuZivqU5bw7oAwxbr5wdoCdtJpcFgXoC81XFLkQjhhdSrsKxpNN-SO30oo7Nq-4mxR3FGE1Tb6ujYa-3eCQmidxMJ5DXgDwzg2TLClQFwDeuf1MFtRYMWbXjBXJCS4hbsqufEVnDprbyiWoJsK1RejH4hAPgP4b0WnO0qheX-ewEcPM-BsLVrOm3eti4At7729eSlxQEj0C8hVGcSzX-gLiq8TrbDJDu6NuTFLDfd9JbZYR9LAtTZ4DoM0muA7twY515sQhTaX-SknbrrrjSYOzKqSt-LPi-HM-tICkBWDRy97Gb0rhHRqnblEQv4WhSfCxybv8vsMz9yUrwy53niUIrX6WSB1_V8k5ihMph529gnITRQKWEnIwvqFg37kZzZ5ImUqOiNGXEuKUV9hGbqGgKNTEyq5Cauy_zunJIp5zT9KJfV0XVF7A3lM5gjNeWwMkP-O-LG4qjlbyPlJWnkfbYVMpWY04FLiun_QB67-0O_ypAz8lw0zWEn9eU3KPwAkBI88vTTDdY1dghIKdgWDTAsxsOuUXCA7Yf5-pjI61v4UOFRTQeXxMPNEzU3WLRvn8WEpwbu4f9b2kkcomxBHEB0Q=s834-no" ],
@@ -38,18 +40,26 @@ elos_map = [
 
 @client.event
 async def on_ready():
+    # TODO I think this should be removed, since is is unused
     print("The bot is ready!")
 
 @client.event
 async def on_member_join(member):
+    # TODO I think this should be removed, since is is unused, or, adapt to
+    # send an welcome text on member join ...
+    # maybe thats the real reason for this piece of code to exist ¯\(°_o)/¯
     print('{} entrou no rolê!'.format(member))
 
 @client.event
 async def on_member_remove(member):
+    # TODO I think this should be removed, since is is unused, or, adapt to
+    # send an welcome text on member join ...
+    # maybe thats the real reason for this piece of code to exist ¯\(°_o)/¯
     print('{} saiu do rolê!'.format(member))
 
 @client.command()
 async def ping(ctx):
+    # TODO docstring
     await ctx.send('pong')
 
 @client.command()
@@ -85,6 +95,7 @@ async def ability(ctx, ability):
     response = ability_information(data)
     await ctx.send(response)
 
+# TODO Remove this it is irrelevant, and the guys dont use it anymore ¯\(°_o)/¯
 @client.command()
 async def frase_do_sidney(ctx):
     options = ['VAI SER EMOCIONANTE!', 'manicaca']
@@ -98,6 +109,7 @@ async def quote(ctx, *phrase):
     if phrase:
         quoted = ' '.join(word for word in phrase)
 
+        # TODO build the query in another dedicated module and import here
         part_1 = "{\"query\":\"mutation{\\n  createAbpQuote(input:{\\n    quote: \\\" " 
         part_2 = "\\\"\\n  }){\\n    response\\n  }\\n}\"}"
         headers = {
@@ -118,11 +130,13 @@ async def random_quote(ctx):
     '''
     Retorna um quote aleatório
     '''
+    # TODO build the query in another dedicated module and import here
     payload = "{\"query\":\"query{\\n  abpQuotes\\n}\"}"
     headers = {
         'content-type': "application/json"
         }
 
+    # TODO Exchange requests for gql module
     response = requests.request("POST", LISA_URL, data=payload, headers=headers)
     response = json.loads(response.text)
     quotes = response['data'].get('abpQuotes')
@@ -142,6 +156,7 @@ async def random_pokemon(ctx):
     response = dex_information(poke)
     await ctx.send(response)
 
+# TODO Remove this it is irrelevant, and the guys dont use it anymore ¯\(°_o)/¯
 @client.command()
 async def gugasaur(ctx):
     '''
@@ -154,6 +169,7 @@ async def gugasaur(ctx):
 
 @client.command()
 async def top_ranked(ctx, *args):
+    # TODO docstring
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
     
@@ -191,7 +207,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
         await ctx.send('Treinador não encontrado')
         return
 
-    # loock-up trainer elo data
+    # lookup for the trainer elo data
     nick = "**__"+ trainer[1] +"__**"
     elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
     elo = elo_rank.lower().replace("á", "a")
@@ -300,11 +316,13 @@ async def ranked_validate(ctx):
         await ctx.send(output)
 
 def get_initial_ranked_table():
+    # TODO docstring
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
     ]
 
 def find_trainer(trainer_nickname, data = None):
+    # TODO docstring
     data = data if data != None else get_ranked_spreadsheet()
     pos = 0
     for trainer in data:
@@ -316,7 +334,8 @@ def find_trainer(trainer_nickname, data = None):
 
     return None
 
-def get_trainer_rank_row(trainer, position):    
+def get_trainer_rank_row(trainer, position):
+    # TODO docstring
     # remove name and insert the position in the front
     del trainer[0]
     trainer.insert(0, position)
@@ -335,11 +354,13 @@ def get_trainer_rank_row(trainer, position):
     return trainer
 
 def get_table_output(table):
+    # TODO docstring
     design = 'rst'
     response = tabulate(table, tablefmt=design, numalign="right")
     return '```{}```'.format(response)
 
 def get_embed_output(ranked_table):
+    # TODO docstring
     rank_index = ranked_table[0].index("Rank")
     trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
     pts_size = len(str(ranked_table[1][4]))
