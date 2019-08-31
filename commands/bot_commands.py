@@ -5,14 +5,13 @@ o processamento destas funções devem estar em um outro módulo dedicado e
 importá-lo neste escopo, deixando este módulo o mais limpo possível e
 facilitando a identificação e manutenção dos comandos.
 """
-
 from random import choice
 import discord
 from discord.ext import commands
 from discord.utils import get
 from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL)
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
-                                get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive)
+                                get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive, get_embed_output)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                                get_item_data, item_information,
                                get_ability_data, ability_information)
@@ -413,30 +412,3 @@ def get_table_output(table):
     response = tabulate(table, tablefmt=design, numalign="right")
 
     return '```{}```'.format(response)
-
-# TODO move this to an util or tools dedicated module
-def get_embed_output(ranked_table):
-    """
-    Processa uma mensagem embed bonita e formatada.
-
-    param : ranked_table : <list> :
-
-    return : <class 'discord.embeds.Embed'> :
-    """
-
-    rank_index = ranked_table[0].index("Rank")
-    trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
-    pts_size = len(str(ranked_table[1][4]))
-    
-    embed = discord.Embed(color=trainer1_elo_data[COLOR_INDEX], type="rich")
-    embed.set_thumbnail(url="https://uploaddeimagens.com.br/images/002/296/393/original/abp_logo.png")
-    
-    for i, trainer in enumerate(ranked_table[1:21], start=1):
-        elo = trainer[rank_index].lower().replace("á", "a")
-        emoji = get(client.emojis, name=elo)
-
-        title = "{0} {1}º - {2}".format(str(emoji), str(i), trainer[1])
-        details = "Wins: `{0:0>3}` | Bts: `{1:0>3}` | Pts: **`{2:0>{pts_size}}`**".format(trainer[2], trainer[3], trainer[4], pts_size=pts_size)
-        embed.add_field(name=title, value=details, inline=True)
-
-    return embed

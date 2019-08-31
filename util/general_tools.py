@@ -91,3 +91,30 @@ def get_spreadsheet_data(spreadSheetId, cellRange):
 def compare_insensitive(s1, s2):
     # TODO: improve it to ignore all special characters
     return s1.strip().lower().replace("á", "a") == s2.strip().lower().replace("á", "a")
+
+
+def get_embed_output(ranked_table):
+    """
+    Processa uma mensagem embed bonita e formatada.
+
+    param : ranked_table : <list> :
+
+    return : <class 'discord.embeds.Embed'> :
+    """
+
+    rank_index = ranked_table[0].index("Rank")
+    trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
+    pts_size = len(str(ranked_table[1][4]))
+    
+    embed = discord.Embed(color=trainer1_elo_data[COLOR_INDEX], type="rich")
+    embed.set_thumbnail(url="https://uploaddeimagens.com.br/images/002/296/393/original/abp_logo.png")
+    
+    for i, trainer in enumerate(ranked_table[1:21], start=1):
+        elo = trainer[rank_index].lower().replace("á", "a")
+        emoji = get(client.emojis, name=elo)
+
+        title = "{0} {1}º - {2}".format(str(emoji), str(i), trainer[1])
+        details = "Wins: `{0:0>3}` | Bts: `{1:0>3}` | Pts: **`{2:0>{pts_size}}`**".format(trainer[2], trainer[3], trainer[4], pts_size=pts_size)
+        embed.add_field(name=title, value=details, inline=True)
+
+    return embed
