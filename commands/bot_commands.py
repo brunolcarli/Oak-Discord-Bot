@@ -1,3 +1,11 @@
+"""
+Módulo para comandos do bot. Neste arquivo deverão conter apenas funções de
+chamada dos comandos que o bot responde. Demais algoritmos, mesmo contendo
+o processamento destas funções devem estar em um outro módulo dedicado e
+importá-lo neste escopo, deixando este módulo o mais limpo possível e
+facilitando a identificação e manutenção dos comandos.
+"""
+
 from random import choice
 import discord
 from discord.ext import commands
@@ -69,9 +77,9 @@ async def ping(ctx):
 
 @client.command()
 async def dex(ctx, pokemon):
-    '''
-    Responde informações sobre um pokemon
-    '''
+    """
+    Responde informações sobre um pokemon.
+    """
     poke = get_pokemon_data(pokemon.lower())
     response = dex_information(poke)
     if not response:
@@ -84,18 +92,18 @@ async def dex(ctx, pokemon):
 
 @client.command()
 async def item(ctx, item):
-    '''
-    Responde informações sobre um item
-    '''
+    """
+    Responde informações sobre um item.
+    """
     data = get_item_data(item.lower())
     response = item_information(data)
     await ctx.send(response)
 
 @client.command()
 async def ability(ctx, ability):
-    '''
+    """
     Responde informações sobre uma habilidade
-    '''
+    """
     data = get_ability_data(ability.lower())
     response = ability_information(data)
     await ctx.send(response)
@@ -108,9 +116,9 @@ async def frase_do_sidney(ctx):
 
 @client.command()
 async def quote(ctx, *phrase):
-    '''
+    """
     Salva uma mensagem como quote para ser eternamente lembrado
-    '''
+    """
     if phrase:
         quoted = ' '.join(word for word in phrase)
 
@@ -132,9 +140,9 @@ async def quote(ctx, *phrase):
 
 @client.command()
 async def random_quote(ctx):
-    '''
+    """
     Retorna um quote aleatório
-    '''
+    """
     # TODO build the query in another dedicated module and import here
     payload = "{\"query\":\"query{\\n  abpQuotes\\n}\"}"
     headers = {
@@ -150,9 +158,9 @@ async def random_quote(ctx):
 
 @client.command()
 async def random_pokemon(ctx):
-    '''
+    """
     Responde com um pokémon aleatório
-    '''
+    """
     with open('files/pokes.txt', 'r') as f:
         pokes = f.readlines()
 
@@ -164,9 +172,9 @@ async def random_pokemon(ctx):
 # TODO Remove this it is irrelevant, and the guys dont use it anymore ¯\(°_o)/¯
 @client.command()
 async def gugasaur(ctx):
-    '''
+    """
     Responde com o pokemon do guga
-    '''
+    """
     poke = get_pokemon_data('tyrantrum')
     response = dex_information(poke)
 
@@ -200,9 +208,9 @@ async def top_ranked(ctx, *args):
 
 @client.command()
 async def ranked_trainer(ctx, *trainer_nickname):
-    '''
+    """
     Busca o score de um trainer na ranked pelo nick do caboclo.
-    '''
+    """
     if not trainer_nickname:
         await ctx.send('Forneça um nick\nUso: `/ranked_trainer <nickname>`')
         return
@@ -235,9 +243,9 @@ async def ranked_trainer(ctx, *trainer_nickname):
 
 @client.command()
 async def ranked_elo(ctx, *elo_arg):
-    '''
+    """
     Retorna todos os treinadores que estão no Rank Elo solicitado.
-    '''
+    """
     if not elo_arg:
         await ctx.send('Forneça um Rank Elo\nUso: `/ranked_elo <elo>`')
         return
@@ -268,9 +276,9 @@ async def ranked_elo(ctx, *elo_arg):
 
 @client.command()
 async def ranked_validate(ctx):
-    '''
+    """
     Valida as entradas pendentes do formulário de registro de batalhas
-    '''
+    """
     if ctx.message.channel.name != ADMIN_CHANNEL:
         return
 
