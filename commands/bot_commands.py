@@ -40,7 +40,10 @@ elos_map = [
 
 @client.event
 async def on_ready():
-    # TODO I think this should be removed, since is is unused
+    """
+    Imprime uma mensagem no console informando que o bot, a princípio executou
+    corretamente.
+    """
     print("The bot is ready!")
 
 @client.event
@@ -59,7 +62,9 @@ async def on_member_remove(member):
 
 @client.command()
 async def ping(ctx):
-    # TODO docstring
+    """
+    Verifica se o bot está executando. Responde com "pong" caso positivo.
+    """
     await ctx.send('pong')
 
 @client.command()
@@ -169,7 +174,9 @@ async def gugasaur(ctx):
 
 @client.command()
 async def top_ranked(ctx, *args):
-    # TODO docstring
+    """
+    Informa os 20 primeiros colocados da Ranked ABP.
+    """
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
     
@@ -315,14 +322,29 @@ async def ranked_validate(ctx):
         output = get_table_output(err)
         await ctx.send(output)
 
+# TODO move this to an util or tools dedicated module
 def get_initial_ranked_table():
-    # TODO docstring
+    """
+    Retorna uma lista contendo uma lista com as colunas a serem exibidas
+    no placar da Ranked.
+
+    params : None :
+    return : <list> :
+    """
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
     ]
 
+# TODO move this to an util or tools dedicated module
 def find_trainer(trainer_nickname, data = None):
-    # TODO docstring
+    """
+    Procura por um treinador específico na tabela de treinadores da ranked.
+
+    param : trainer_nickname : <str>
+    param : data : <list> : param data default value : None
+                    TODO <- corrija-me se eu estiver errado Thiago Menezes
+    return : <list>
+    """
     data = data if data != None else get_ranked_spreadsheet()
     pos = 0
     for trainer in data:
@@ -334,8 +356,18 @@ def find_trainer(trainer_nickname, data = None):
 
     return None
 
+# TODO move this to an util or tools dedicated module
 def get_trainer_rank_row(trainer, position):
-    # TODO docstring
+    """
+    Busca na planilha da Ranked a linha de dados contendo a informação
+    do treinador, retornando um vetor de dados atualizados do treinador.
+
+    param : trainer : <list> :
+    param : position : <int> :
+
+    return : <list> :
+    """
+
     # remove name and insert the position in the front
     del trainer[0]
     trainer.insert(0, position)
@@ -353,14 +385,37 @@ def get_trainer_rank_row(trainer, position):
     
     return trainer
 
+# TODO move this to an util or tools dedicated module
 def get_table_output(table):
-    # TODO docstring
+    """
+    Formata uma tabela com a lib tabulate, retornando a tabela formatada
+    dentro de um bloco de código de Markdown.
+    Exemplo:
+    ```
+        ===  ===============  ====  ===  ===  ========
+        MARKDOWN CODE BLOCK WITHIN A TABULATE TABLE
+        ===  ===============  ====  ===  ===  ========
+    ```
+
+    param : table : <list> :
+
+    return : <str> :
+    """
     design = 'rst'
     response = tabulate(table, tablefmt=design, numalign="right")
+
     return '```{}```'.format(response)
 
+# TODO move this to an util or tools dedicated module
 def get_embed_output(ranked_table):
-    # TODO docstring
+    """
+    Processa uma mensagem embed bonita e formatada.
+
+    param : ranked_table : <list> :
+
+    return : <class 'discord.embeds.Embed'> :
+    """
+
     rank_index = ranked_table[0].index("Rank")
     trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
     pts_size = len(str(ranked_table[1][4]))
