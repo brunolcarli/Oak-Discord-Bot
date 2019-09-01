@@ -23,6 +23,7 @@ import json
 import random
 from datetime import datetime
 
+
 # TODO - move this to a constants, settings or config file
 class ErrorResponses:
     E404 = 'Não encontrei esta informação! (E404)'
@@ -32,8 +33,6 @@ class ErrorResponses:
 client = commands.Bot(command_prefix='/')
 
 
-# TODO move this to another module. Declare within a set/tuple in UPPER_CASE
-
 @client.event
 async def on_ready():
     """
@@ -42,12 +41,14 @@ async def on_ready():
     """
     print("The bot is ready!")
 
+
 @client.event
 async def on_member_join(member):
     # TODO I think this should be removed, since is is unused, or, adapt to
     # send an welcome text on member join ...
     # maybe thats the real reason for this piece of code to exist ¯\(°_o)/¯
     print('{} entrou no rolê!'.format(member))
+
 
 @client.event
 async def on_member_remove(member):
@@ -56,12 +57,14 @@ async def on_member_remove(member):
     # maybe thats the real reason for this piece of code to exist ¯\(°_o)/¯
     print('{} saiu do rolê!'.format(member))
 
+
 @client.command()
 async def ping(ctx):
     """
     Verifica se o bot está executando. Responde com "pong" caso positivo.
     """
     await ctx.send('pong')
+
 
 @client.command()
 async def dex(ctx, pokemon):
@@ -78,6 +81,7 @@ async def dex(ctx, pokemon):
 
     await ctx.send(response)
 
+
 @client.command()
 async def item(ctx, item):
     """
@@ -86,6 +90,7 @@ async def item(ctx, item):
     data = get_item_data(item.lower())
     response = item_information(data)
     await ctx.send(response)
+
 
 @client.command()
 async def ability(ctx, ability):
@@ -96,11 +101,13 @@ async def ability(ctx, ability):
     response = ability_information(data)
     await ctx.send(response)
 
+
 # TODO Remove this it is irrelevant, and the guys dont use it anymore ¯\(°_o)/¯
 @client.command()
 async def frase_do_sidney(ctx):
     options = ['VAI SER EMOCIONANTE!', 'manicaca']
     await ctx.send(choice(options))
+
 
 @client.command()
 async def quote(ctx, *phrase):
@@ -125,6 +132,7 @@ async def quote(ctx, *phrase):
         response = "Insira alguma pérola!"
 
     await ctx.send(response)
+
 
 @client.command()
 async def random_quote(ctx):
@@ -194,6 +202,7 @@ async def top_ranked(ctx, *args):
         output = get_table_output(table)
         await ctx.send(output)
 
+
 @client.command()
 async def ranked_trainer(ctx, *trainer_nickname):
     """
@@ -229,6 +238,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
     
     await ctx.send(nick, embed=embed)
 
+
 @client.command()
 async def ranked_elo(ctx, *elo_arg):
     """
@@ -261,6 +271,7 @@ async def ranked_elo(ctx, *elo_arg):
     
     output = get_table_output(table)
     await ctx.send(output)
+
 
 @client.command()
 async def ranked_validate(ctx):
@@ -318,6 +329,7 @@ async def ranked_validate(ctx):
         output = get_table_output(err)
         await ctx.send(output)
 
+
 # TODO move this to an util or tools dedicated module
 def get_initial_ranked_table():
     """
@@ -330,6 +342,7 @@ def get_initial_ranked_table():
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
     ]
+
 
 # TODO move this to an util or tools dedicated module
 def find_trainer(trainer_nickname, data = None):
