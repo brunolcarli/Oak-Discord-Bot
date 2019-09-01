@@ -139,6 +139,7 @@ async def random_quote(ctx):
 
     await ctx.send(choice(quotes))
 
+
 @client.command()
 async def random_pokemon(ctx):
     """
@@ -152,16 +153,6 @@ async def random_pokemon(ctx):
     response = dex_information(poke)
     await ctx.send(response)
 
-# TODO Remove this it is irrelevant, and the guys dont use it anymore ¯\(°_o)/¯
-@client.command()
-async def gugasaur(ctx):
-    """
-    Responde com o pokemon do guga
-    """
-    poke = get_pokemon_data('tyrantrum')
-    response = dex_information(poke)
-
-    await ctx.send(response)
 
 @client.command()
 async def top_ranked(ctx, *args):
