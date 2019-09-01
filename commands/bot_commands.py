@@ -224,31 +224,30 @@ async def ranked_elo(ctx, *elo_arg):
     """
     if not elo_arg:
         await ctx.send('Forneça um Rank Elo\nUso: `/ranked_elo <elo>`')
-        return
 
-    elo = ' '.join(word for word in elo_arg)
-    data = get_ranked_spreadsheet()
-    table = get_initial_ranked_table()
-    
-    for i, trainer in enumerate(data, start=1):
-        rank =  get_trainer_rank(trainer[SCORE_INDEX])
-        isTargetElo = compare_insensitive(rank, elo)
-        if isTargetElo:
-            trainer = get_trainer_rank_row(trainer, i)       
-            table.append(trainer)
-    
-    # only table header
-    if len(table) == 1:
-        await ctx.send('Treinadores não encontrados para o Elo: ' + elo)
-        return
+    else:
+        elo = ' '.join(word for word in elo_arg)
+        data = get_ranked_spreadsheet()
+        table = get_initial_ranked_table()
 
-    # when too big table, shows just the first 20
-    if len(table) > 20:
-        table = table[:21]
-        await ctx.send('Top 20 treinadores do Elo: ' + elo)
-    
-    output = get_table_output(table)
-    await ctx.send(output)
+        for i, trainer in enumerate(data, start=1):
+            rank = get_trainer_rank(trainer[SCORE_INDEX])
+            is_target_elo = compare_insensitive(rank, elo)
+            if is_target_elo:
+                trainer = get_trainer_rank_row(trainer, i)
+                table.append(trainer)
+
+        # only table header
+        if len(table) == 1:
+            await ctx.send('Treinadores não encontrados para o Elo: ' + elo)
+
+        # when too big table, shows just the first 20
+        elif len(table) > 20:
+            table = table[:21]
+            await ctx.send('Top 20 treinadores do Elo: ' + elo)
+
+            output = get_table_output(table)
+            await ctx.send(output)
 
 
 @client.command()
