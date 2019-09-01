@@ -9,21 +9,20 @@ facilitando a identificação e manutenção dos comandos.
 # std libs
 from random import choice, randint
 from datetime import datetime
-import requests
 import json
+import requests
 
 # Discord tools
 import discord
 from discord.ext import commands
-from discord.utils import get
 
 # settings constants
-from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX,
-                    SD_NAME_INDEX, ADMIN_CHANNEL, COLOR_INDEX, ELO_IMG_INDEX)
+from settings import (LISA_URL, SCORE_INDEX, ADMIN_CHANNEL,
+                      COLOR_INDEX, ELO_IMG_INDEX)
 
 # general tools
 from util.showdown_battle import load_battle_replay
-from util.elos import Elos, get_elo, validate_elo_battle, ELOS_MAP
+from util.elos import get_elo, validate_elo_battle, ELOS_MAP
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet,
                                 compare_insensitive, get_embed_output,
@@ -117,7 +116,7 @@ async def quote(ctx, *phrase):
         quoted = ' '.join(word for word in phrase)
 
         # TODO build the query in another dedicated module and import here
-        part_1 = "{\"query\":\"mutation{\\n  createAbpQuote(input:{\\n    quote: \\\" " 
+        part_1 = "{\"query\":\"mutation{\\n  createAbpQuote(input:{\\n quote: \\\" "
         part_2 = "\\\"\\n  }){\\n    response\\n  }\\n}\"}"
         headers = {
             'content-type': "application/json"
@@ -175,8 +174,8 @@ async def top_ranked(ctx, *args):
     table = get_initial_ranked_table()
 
     view_types = [
-        [ "list", "lista", "elos" ],
-        [ "table", "tabela" ]
+        ["list", "lista", "elos"],
+        ["table", "tabela"]
     ]
     is_list = len(args) > 0 and args[0].strip().lower() in view_types[0]
 
@@ -273,7 +272,7 @@ async def ranked_validate(ctx):
         data = get_form_spreadsheet()
         ranked_data = get_ranked_spreadsheet()
         errors = [
-            [ "Ln.", "Error" ]
+            ["Ln.", "Error"]
         ]
 
         # TIP: Encurte links grandes no bit.ly
@@ -313,7 +312,7 @@ async def ranked_validate(ctx):
             result = load_battle_replay(row[4])  # 4 is the replay
 
             if not result.success:
-                errors.append([i, "Não foi possivel carregar o replay" ])
+                errors.append([i, "Não foi possivel carregar o replay"])
 
             # validate replay metadata
             battle_result = result.battle.validate(
@@ -321,7 +320,7 @@ async def ranked_validate(ctx):
                 row[3],
                 datetime.strptime(row[0], "%d/%m/%Y %H:%M:%S")
             )
-            
+
             if not battle_result.success:
                 errors.append([i, battle_result.error])
 
