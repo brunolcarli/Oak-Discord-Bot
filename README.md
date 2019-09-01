@@ -8,7 +8,11 @@
 
 PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
 
+![Generic badge](https://img.shields.io/badge/version-0.0.1-green.svg)
+
+
 </td></tr></table>
+
 
 # Adicionando o Oak ao seu Servidor
 
@@ -79,3 +83,11 @@ make init
 ```
 
 Uma mensagem `The bot is ready!` será exibida informando que o bot está executando.
+
+## Alterando a versão
+
+Sempre que uma nova feature for incluída, utilize o comando:
+
+```
+bumpversion patch
+```

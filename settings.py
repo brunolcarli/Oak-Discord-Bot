@@ -18,4 +18,4 @@ SD_NAME_INDEX = 1
 COLOR_INDEX = 1
 ELO_IMG_INDEX = 2
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
