@@ -96,13 +96,6 @@ async def ability(ctx, ability):
     await ctx.send(response)
 
 
-# TODO Remove this it is irrelevant, and the guys dont use it anymore ¯\(°_o)/¯
-@client.command()
-async def frase_do_sidney(ctx):
-    options = ['VAI SER EMOCIONANTE!', 'manicaca']
-    await ctx.send(choice(options))
-
-
 @client.command()
 async def quote(ctx, *phrase):
     """
