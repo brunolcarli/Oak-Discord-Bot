@@ -173,3 +173,15 @@ def get_trainer_rank_row(trainer, position):
     trainer.append(rank)
     
     return trainer
+
+def get_initial_ranked_table():
+    """
+    Retorna uma lista contendo uma lista com as colunas a serem exibidas
+    no placar da Ranked.
+
+    params : None :
+    return : <list> :
+    """
+    return [
+        [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
+    ]
