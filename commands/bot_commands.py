@@ -5,23 +5,35 @@ o processamento destas funções devem estar em um outro módulo dedicado e
 importá-lo neste escopo, deixando este módulo o mais limpo possível e
 facilitando a identificação e manutenção dos comandos.
 """
-from random import choice
+
+# std libs
+from random import choice, randint
+from datetime import datetime
+import requests
+import json
+
+# Discord tools
 import discord
 from discord.ext import commands
 from discord.utils import get
-from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL, COLOR_INDEX, ELO_IMG_INDEX)
+
+# settings constants
+from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX,
+                    SD_NAME_INDEX, ADMIN_CHANNEL, COLOR_INDEX, ELO_IMG_INDEX)
+
+# general tools
+from util.showdown_battle import load_battle_replay
+from util.elos import Elos, get_elo, validate_elo_battle, ELOS_MAP
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
-                                get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive, get_embed_output,
-                                get_table_output, get_trainer_rank_row, get_initial_ranked_table, find_trainer,)
-from util.get_api_data import (dex_information, get_pokemon_data, 
+                                get_ranked_spreadsheet, get_form_spreadsheet,
+                                compare_insensitive, get_embed_output,
+                                get_table_output, get_trainer_rank_row,
+                                get_initial_ranked_table, find_trainer)
+
+# requests tools
+from util.get_api_data import (dex_information, get_pokemon_data,
                                get_item_data, item_information,
                                get_ability_data, ability_information)
-from util.showdown_battle import load_battle_replay
-from util.elos import (Elos, get_elo, validate_elo_battle, ELOS_MAP)
-import requests
-import json
-import random
-from datetime import datetime
 
 
 client = commands.Bot(command_prefix='/')
@@ -315,7 +327,7 @@ async def ranked_validate(ctx):
 
         # only table header
         if len(errors) == 1:
-            await ctx.send('All good! 👍 ' + ok[random.randint(0, len(ok)-1)])
+            await ctx.send('All good! 👍 ' + ok[randint(0, len(ok)-1)])
 
         else:
             # when too big errors table, split into smaller data
