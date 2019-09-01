@@ -24,12 +24,6 @@ import random
 from datetime import datetime
 
 
-# TODO - move this to a constants, settings or config file
-class ErrorResponses:
-    E404 = 'Não encontrei esta informação! (E404)'
-    E111 = 'Agora estou ocupado. A Lisa está dodói. (E111)'
-
-
 client = commands.Bot(command_prefix='/')
 
 
