@@ -188,33 +188,33 @@ async def ranked_trainer(ctx, *trainer_nickname):
     """
     if not trainer_nickname:
         await ctx.send('Forneça um nick\nUso: `/ranked_trainer <nickname>`')
-        return
-    
-    trainer_nickname = ' '.join(word for word in trainer_nickname)
-    trainer = find_trainer(trainer_nickname)
 
-    if not trainer:
-        await ctx.send('Treinador não encontrado')
-        return
+    else:
+        trainer_nickname = ' '.join(word for word in trainer_nickname)
+        trainer = find_trainer(trainer_nickname)
 
-    # lookup for the trainer elo data
-    nick = "**__"+ trainer[1] +"__**"
-    elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
-    elo = elo_rank.lower().replace("á", "a")
-    elo_data = [item for item in ELOS_MAP if item[0] == elo][0]
+        if not trainer:
+            await ctx.send('Treinador não encontrado')
 
-    # setup embed data
-    embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
-    embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
-    
-    embed.add_field(name="Pos", value=trainer[6], inline=True)
-    embed.add_field(name="Elo", value=elo_rank, inline=True)
-    embed.add_field(name="Wins", value=trainer[2], inline=True)
-    embed.add_field(name="Losses", value=trainer[3], inline=True)
-    embed.add_field(name="Battles", value=trainer[5], inline=True)
-    embed.add_field(name="Points", value=trainer[4], inline=True)
-    
-    await ctx.send(nick, embed=embed)
+        else:
+            # lookup for the trainer elo data
+            nick = "**__" + trainer[1] + "__**"
+            elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
+            elo = elo_rank.lower().replace("á", "a")
+            elo_data = [item for item in ELOS_MAP if item[0] == elo][0]
+
+            # setup embed data
+            embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
+            embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
+            
+            embed.add_field(name="Pos", value=trainer[6], inline=True)
+            embed.add_field(name="Elo", value=elo_rank, inline=True)
+            embed.add_field(name="Wins", value=trainer[2], inline=True)
+            embed.add_field(name="Losses", value=trainer[3], inline=True)
+            embed.add_field(name="Battles", value=trainer[5], inline=True)
+            embed.add_field(name="Points", value=trainer[4], inline=True)
+
+            await ctx.send(nick, embed=embed)
 
 
 @client.command()
