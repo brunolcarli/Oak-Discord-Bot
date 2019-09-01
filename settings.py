@@ -9,7 +9,7 @@ ADMIN_CHANNEL = config('ADMIN_CHANNEL')
 POKE_API_URL = 'https://pokeapi.co/api/v2/pokemon/'
 ITEM_API_URL = 'https://pokeapi.co/api/v2/item/'
 ABILITY_API_URL = 'https://pokeapi.co/api/v2/ability/'
-EFFECTIVENESS_API_URL = 'https://raw.githubusercontent.com/pokeweak/pokeweak.github.io/master/pokemon.json'
+EFFECTIVENESS_API_URL = 'http://bit.ly/2ZKJ5UW'
 
 LISA_URL = config('LISA')
 RANKED_SPREADSHEET_ID = '1E2cQBWeQc9JkCKv3BUPClGwulPXXg-4hTYotuUKmoJI'
