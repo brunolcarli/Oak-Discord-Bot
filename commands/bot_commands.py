@@ -12,7 +12,7 @@ from discord.utils import get
 from settings import (LISA_URL, RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX, ADMIN_CHANNEL, COLOR_INDEX, ELO_IMG_INDEX)
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet, compare_insensitive, get_embed_output,
-                                get_table_output, get_trainer_rank_row, get_initial_ranked_table)
+                                get_table_output, get_trainer_rank_row, get_initial_ranked_table, find_trainer,)
 from util.get_api_data import (dex_information, get_pokemon_data, 
                                get_item_data, item_information,
                                get_ability_data, ability_information)
@@ -325,25 +325,3 @@ async def ranked_validate(ctx):
                 await ctx.send(output)
     else:
         await ctx.send("Comando restrito!")
-
-
-# TODO move this to an util or tools dedicated module
-def find_trainer(trainer_nickname, data = None):
-    """
-    Procura por um treinador específico na tabela de treinadores da ranked.
-
-    param : trainer_nickname : <str>
-    param : data : <list> : param data default value : None
-                    TODO <- corrija-me se eu estiver errado Thiago Menezes
-    return : <list>
-    """
-    data = data if data != None else get_ranked_spreadsheet()
-    pos = 0
-    for trainer in data:
-        pos += 1
-        trainer_found = compare_insensitive(trainer[SD_NAME_INDEX], trainer_nickname)
-        if trainer_found:
-            trainer.append(pos)
-            return trainer
-
-    return None

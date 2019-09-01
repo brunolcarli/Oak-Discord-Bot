@@ -185,3 +185,24 @@ def get_initial_ranked_table():
     return [
         [ 'Pos', 'Nick', 'Wins', 'Bts', 'Pts', 'Rank' ],
     ]
+
+
+def find_trainer(trainer_nickname, data = None):
+    """
+    Procura por um treinador específico na tabela de treinadores da ranked.
+
+    param : trainer_nickname : <str>
+    param : data : <list> : param data default value : None
+                    TODO <- corrija-me se eu estiver errado Thiago Menezes
+    return : <list>
+    """
+    data = data if data != None else get_ranked_spreadsheet()
+    pos = 0
+    for trainer in data:
+        pos += 1
+        trainer_found = compare_insensitive(trainer[SD_NAME_INDEX], trainer_nickname)
+        if trainer_found:
+            trainer.append(pos)
+            return trainer
+
+    return None
