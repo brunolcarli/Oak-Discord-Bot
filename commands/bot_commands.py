@@ -161,7 +161,7 @@ async def top_ranked(ctx, *args):
     """
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
-    
+
     view_types = [
         [ "list", "lista", "elos" ],
         [ "table", "tabela" ]
@@ -176,6 +176,7 @@ async def top_ranked(ctx, *args):
         descript = "**__Top Players__**"
         output = get_embed_output(table, client)
         await ctx.send(descript, embed=output)
+
     else:
         output = get_table_output(table)
         await ctx.send(output)
@@ -255,56 +256,75 @@ async def ranked_validate(ctx):
     """
     Valida as entradas pendentes do formulário de registro de batalhas
     """
-    if ctx.message.channel.name != ADMIN_CHANNEL:
-        return
+    if ctx.message.channel.name == ADMIN_CHANNEL:
 
-    data = get_form_spreadsheet()
-    ranked_data = get_ranked_spreadsheet()
-    errors = [
-        [ "Ln.", "Error" ]
-    ]
-    ok = [ 'http://i.imgur.com/dTysUHw.jpg', 'https://media.tenor.com/images/4439cf6a16b577d81f6e06b9ba2fd278/tenor.gif', 'https://i.kym-cdn.com/photos/images/original/001/092/497/a30.jpg', 'https://i.kym-cdn.com/entries/icons/facebook/000/012/542/thumb-up-terminator_pablo_M_R.jpg', 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif' ]
-    
-    for i, row in enumerate(data, start=2):
-        # validate trainers
-        trainers_result = ""
-        winner_data = find_trainer(row[2], ranked_data)
-        loser_data  = find_trainer(row[3], ranked_data)
-        if winner_data == None: trainers_result += "Winner not found; "
-        if loser_data  == None: trainers_result += "Loser not found; "
-        if trainers_result != "":
-            errors.append([i, trainers_result])
-            continue
+        data = get_form_spreadsheet()
+        ranked_data = get_ranked_spreadsheet()
+        errors = [
+            [ "Ln.", "Error" ]
+        ]
 
-        # validate elos
-        winner_elo  = get_elo(get_trainer_rank(winner_data[SCORE_INDEX]))
-        loser_elo   = get_elo(get_trainer_rank(loser_data[SCORE_INDEX]))
-        valid_elos  = validate_elo_battle(winner_elo, loser_elo)
-        if not valid_elos:
-            errors.append([i, "Invalid elos matchup ({} vs {})".format(winner_elo.name, loser_elo.name)])
-            continue
-        
-        # validate showdown replay
-        result = load_battle_replay(row[4]) # 4 is the replay
-        if not result.success:
-            errors.append([i, "Não foi possivel carregar o replay" ])
-            continue
-        
-        # validate replay metadata
-        battle_result = result.battle.validate(row[2], row[3], datetime.strptime(row[0], "%d/%m/%Y %H:%M:%S"))
-        if not battle_result.success:
-            errors.append([i, battle_result.error])
+        # TIP: Encurte links grandes no bit.ly
+        ok = [
+            'http://i.imgur.com/dTysUHw.jpg',
+            'http://bit.ly/chuck_approve',
+            'https://i.kym-cdn.com/photos/images/original/001/092/497/a30.jpg',
+            'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif'
+        ]
 
-    # only table header
-    if len(errors) == 1:
-        await ctx.send('All good! 👍 ' + ok[random.randint(0, len(ok)-1)])
-        return
+        for i, row in enumerate(data, start=2):
+            # validate trainers
+            trainers_result = ""
+            winner_data = find_trainer(row[2], ranked_data)
+            loser_data = find_trainer(row[3], ranked_data)
 
-    # when too big errors table, split into smaller data
-    chunks = [errors[x:x+10] for x in range(0, len(errors), 10)]
-    for err in chunks:
-        output = get_table_output(err)
-        await ctx.send(output)
+            if not winner_data:
+                trainers_result += "Winner not found; "
+
+            if not loser_data:
+                trainers_result += "Loser not found; "
+
+            if trainers_result:
+                errors.append([i, trainers_result])
+
+            # validate elos
+            winner_elo = get_elo(get_trainer_rank(winner_data[SCORE_INDEX]))
+            loser_elo = get_elo(get_trainer_rank(loser_data[SCORE_INDEX]))
+            valid_elos = validate_elo_battle(winner_elo, loser_elo)
+
+            if not valid_elos:
+                error = f"Invalid elos matchup \
+                    ({winner_elo.name} vs {loser_elo.name})"
+                errors.append([i, error])
+
+            # validate showdown replay
+            result = load_battle_replay(row[4])  # 4 is the replay
+
+            if not result.success:
+                errors.append([i, "Não foi possivel carregar o replay" ])
+
+            # validate replay metadata
+            battle_result = result.battle.validate(
+                row[2],
+                row[3],
+                datetime.strptime(row[0], "%d/%m/%Y %H:%M:%S")
+            )
+            
+            if not battle_result.success:
+                errors.append([i, battle_result.error])
+
+        # only table header
+        if len(errors) == 1:
+            await ctx.send('All good! 👍 ' + ok[random.randint(0, len(ok)-1)])
+
+        else:
+            # when too big errors table, split into smaller data
+            chunks = [errors[x:x+10] for x in range(0, len(errors), 10)]
+            for err in chunks:
+                output = get_table_output(err)
+                await ctx.send(output)
+    else:
+        await ctx.send("Comando restrito!")
 
 
 # TODO move this to an util or tools dedicated module
