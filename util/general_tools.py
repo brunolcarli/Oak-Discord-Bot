@@ -9,7 +9,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 from settings import (RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX,
                       COLOR_INDEX)
-from util.elos import ELOS_MAP
+from util.elos import (ELOS_MAP, get_elo_name)
 
 
 def get_similar_pokemon(pokemon):
@@ -39,7 +39,7 @@ def get_trainer_rank(pts):
     Platina 750 - 849
     Diamante 850 - 949
     Mestre 950- 999
-    Grand mestre 1000
+    Grão mestre 1000
     """
     pts = int(pts)
     if pts < 100:
@@ -57,7 +57,7 @@ def get_trainer_rank(pts):
     elif pts >= 950 and pts < 1000:
         rank = 'Mestre'
     elif pts >= 1000:
-        rank = 'Grande Mestre'
+        rank = 'Grão Mestre'
     return rank
 
 
@@ -114,8 +114,8 @@ def get_spreadsheet_data(spreadsheet_id, cell_range):
 
 def compare_insensitive(s1, s2):
     # TODO: improve it to ignore all special characters
-    s1 = s1.strip().lower().replace("á", "a")
-    s2 = s2.strip().lower().replace("á", "a")
+    s1 = s1.strip().lower().replace("á", "a").replace("ã", "a").replace(" ", "")
+    s2 = s2.strip().lower().replace("á", "a").replace("ã", "a").replace(" ", "")
 
     return s1 == s2
 
@@ -131,7 +131,7 @@ def get_embed_output(ranked_table, client):
     """
     rank_index = ranked_table[0].index("Rank")
     trainer1_elo_data = [item for item in ELOS_MAP \
-        if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
+        if item[0] == get_elo_name(ranked_table[1][rank_index])][0]
 
     pts_size = len(str(ranked_table[1][4]))
 
@@ -139,7 +139,7 @@ def get_embed_output(ranked_table, client):
     embed.set_thumbnail(url="http://bit.ly/abp_logo")
 
     for i, trainer in enumerate(ranked_table[1:21], start=1):
-        elo = trainer[rank_index].lower().replace("á", "a")
+        elo = get_elo_name(trainer[rank_index])
         emoji = get(client.emojis, name=elo)
 
         title = "{0} {1}º - {2}".format(str(emoji), str(i), trainer[1])
