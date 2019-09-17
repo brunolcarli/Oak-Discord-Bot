@@ -165,7 +165,7 @@ async def random_pokemon(ctx):
     await ctx.send(response)
 
 
-@client.command()
+@client.command(aliases=['rtop', 'rt', 'ranked_top'])
 async def top_ranked(ctx, *args):
     """
     Informa os 20 primeiros colocados da Ranked ABP.
@@ -193,7 +193,7 @@ async def top_ranked(ctx, *args):
         await ctx.send(output)
 
 
-@client.command()
+@client.command(aliases=['rtrainer', 'rtr', 'trainer_ranked'])
 async def ranked_trainer(ctx, *trainer_nickname):
     """
     Busca o score de um trainer na ranked pelo nick do caboclo.
@@ -229,7 +229,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
             await ctx.send(nick, embed=embed)
 
 
-@client.command()
+@client.command(aliases=['relo', 're', 'elo_ranked'])
 async def ranked_elo(ctx, *elo_arg):
     """
     Retorna todos os treinadores que estão no Rank Elo solicitado.
@@ -262,7 +262,7 @@ async def ranked_elo(ctx, *elo_arg):
             await ctx.send(output)
 
 
-@client.command()
+@client.command(aliases=['rvalid', 'rv'])
 async def ranked_validate(ctx):
     """
     Valida as entradas pendentes do formulário de registro de batalhas
