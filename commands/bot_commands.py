@@ -9,7 +9,7 @@ from util.get_api_data import (dex_information, get_pokemon_data,
                                get_item_data, item_information,
                                get_ability_data, ability_information)
 from util.showdown_battle import load_battle_replay
-from util.elos import (Elos, get_elo, validate_elo_battle)
+from util.elos import (Elos, get_elo, get_elo_name, validate_elo_battle)
 import requests
 import json
 from tabulate import tabulate
@@ -26,7 +26,7 @@ client = commands.Bot(command_prefix='/')
 COLOR_INDEX = 1
 ELO_IMG_INDEX = 2
 elos_map = [
-    [ "grand mestre", 0x303030, "https://lh3.googleusercontent.com/q7DbMaDc-E0fpgBGy8-B4cvjJ-CTSuCuNYUU1BTLNVtb60vpmTBA0atUKnYmMMzbSgmZdx9t9WwbtI5dtXiEqqqKA9EyHDK7QC_RTI3psIuM0a5xxZJTcwn4EAq6vz_xEJEMdRn5On8HbnFqemtA_O8CYQhHntyAT97j6zseTncL0UT5hC_Qb6ZLqiEcvhNawAJgz2dbfEjvq1z-KmYEc7kU-i6ko9bgChwm1NSUTGSSp96Rkg0qJO7uptGCjUuvkNl9Jfev4HJDa9JgC6rtQMPRXZUCJ46ncAaPcyToyaVi1aj1szhSo5t3taMYLGJeNJJ-Ig125ukLkK9LvOblFYngvx0xpdlk_G4rKLRZRvLbtE2T3z9fmZzrJ8vhIsdEsj1mdKsB9tGn9r1ZIIjJaeFZLGcZXXlvFnytiOhIgYeHJbInils3L5ufVJNdynC5-W8Bckm7fpgVmtbHz-LVu4BOjG1T6QTxwahmivWxU6kst-QKPNoJE2WNejHSWxpu6Zx5wGqlPndilJfdrw6LoKGzV3aoM3m2W9swJKzpAPjWBcsEW-qGbPzCD1DBRklRgUmhSV5ejoiGcbRfcgcgPGmO-a7PFeg22SnYJKy0E9mwSiTLSSu__cGg-EQiQQZ11zD2XjrGbGX9oEN5umuzOYE47qLuQAutSbafrH7_VcG4bfJt-7UpTvfg9heGzoVIpeI2asUTJXRINwCgKgaRdlw=w857-h858-no" ],
+    [ "graomestre",   0x1E1E1E, "https://lh3.googleusercontent.com/q7DbMaDc-E0fpgBGy8-B4cvjJ-CTSuCuNYUU1BTLNVtb60vpmTBA0atUKnYmMMzbSgmZdx9t9WwbtI5dtXiEqqqKA9EyHDK7QC_RTI3psIuM0a5xxZJTcwn4EAq6vz_xEJEMdRn5On8HbnFqemtA_O8CYQhHntyAT97j6zseTncL0UT5hC_Qb6ZLqiEcvhNawAJgz2dbfEjvq1z-KmYEc7kU-i6ko9bgChwm1NSUTGSSp96Rkg0qJO7uptGCjUuvkNl9Jfev4HJDa9JgC6rtQMPRXZUCJ46ncAaPcyToyaVi1aj1szhSo5t3taMYLGJeNJJ-Ig125ukLkK9LvOblFYngvx0xpdlk_G4rKLRZRvLbtE2T3z9fmZzrJ8vhIsdEsj1mdKsB9tGn9r1ZIIjJaeFZLGcZXXlvFnytiOhIgYeHJbInils3L5ufVJNdynC5-W8Bckm7fpgVmtbHz-LVu4BOjG1T6QTxwahmivWxU6kst-QKPNoJE2WNejHSWxpu6Zx5wGqlPndilJfdrw6LoKGzV3aoM3m2W9swJKzpAPjWBcsEW-qGbPzCD1DBRklRgUmhSV5ejoiGcbRfcgcgPGmO-a7PFeg22SnYJKy0E9mwSiTLSSu__cGg-EQiQQZ11zD2XjrGbGX9oEN5umuzOYE47qLuQAutSbafrH7_VcG4bfJt-7UpTvfg9heGzoVIpeI2asUTJXRINwCgKgaRdlw=w857-h858-no" ],
     [ "mestre",       0x80e891, "https://lh3.googleusercontent.com/AiSEFZIbBlprCeSw2tC7Wa3_FsU17T3JOQ3WRXnkzSrgK4kcNZposVAGW0EVOd2BFh1R7ggxvyliYTL1Aa2Tl2zkVtlIFYfsJs3Ses1WVu0TQ_9uMlyp76n4sqndeNuZivqU5bw7oAwxbr5wdoCdtJpcFgXoC81XFLkQjhhdSrsKxpNN-SO30oo7Nq-4mxR3FGE1Tb6ujYa-3eCQmidxMJ5DXgDwzg2TLClQFwDeuf1MFtRYMWbXjBXJCS4hbsqufEVnDprbyiWoJsK1RejH4hAPgP4b0WnO0qheX-ewEcPM-BsLVrOm3eti4At7729eSlxQEj0C8hVGcSzX-gLiq8TrbDJDu6NuTFLDfd9JbZYR9LAtTZ4DoM0muA7twY515sQhTaX-SknbrrrjSYOzKqSt-LPi-HM-tICkBWDRy97Gb0rhHRqnblEQv4WhSfCxybv8vsMz9yUrwy53niUIrX6WSB1_V8k5ihMph529gnITRQKWEnIwvqFg37kZzZ5ImUqOiNGXEuKUV9hGbqGgKNTEyq5Cauy_zunJIp5zT9KJfV0XVF7A3lM5gjNeWwMkP-O-LG4qjlbyPlJWnkfbYVMpWY04FLiun_QB67-0O_ypAz8lw0zWEn9eU3KPwAkBI88vTTDdY1dghIKdgWDTAsxsOuUXCA7Yf5-pjI61v4UOFRTQeXxMPNEzU3WLRvn8WEpwbu4f9b2kkcomxBHEB0Q=s834-no" ],
     [ "diamante",     0x59d0e4, "https://uploaddeimagens.com.br/images/002/278/683/original/Diamante.png" ],
     [ "platina",      0xd7d7d7, "https://lh3.googleusercontent.com/hQifT74Pr0Trza6dQ3_ERzc_ZXkpqjdGTny2uiEUzg_iknxql4ArzmF4aUPiLplcHTbQBuV9lF8qkuU4ZxfDzjVwWk_MDQrZe5D35zwqjtsJIsgP4KRiOwXGkv5RbmxwPnW6w24fvewbViVRWeIUioFz-M2yImPfBEcUmOwF8WCvDw17BnxiHkTjRZkl-N3U1ZG_gqf8jWqUXIPssuJDtVyMkiKp8eixtxyYj_OC-gf5LlaLv4UQdonAeYt20MtpNuPa6r_-wXQ09zM8xv-oWeDnSdrqdRbcZ1JmtmkjaJQpgPdRJ9nt-mg39WxM58avap6kCVlvqwSeB-oX9_eJF_wOex1nnKK0CC06RksUc9FshiN3CRA9ekW8FOzfq0L9ufREGJkgjrRzRnc-A-D8cvLpgAXg6Sa54Q8rwxq-3ojGwPWB_xtFz_1LoPPO4J1ZCocQoheNZnrMifqbXJyQ0i9ce6MZ6fOmUnrdBcZxsyOsh16skzocDRI2XFO2krsgi1I4kSTbHhCS3VkWwOYeRr_EUMr9MZ7xWmqDH3jI7DNjHnbyKkTjsz6Nj3kTsb8a9GJzDjqvExXd6JYsB8OTjy3DtRVFKR5THLfO4d8FryQjnCQY6uJBYduu0t4e6ACKmoh0Ladu2ywQQHG0-EwYDQ6ioYx2DpRUIMB8FAWnN2eMDlafF0BU5Ob0AduV2cKznM47eZCM5yf592n5jl70QwM=s834-no" ],
@@ -160,7 +160,7 @@ async def gugasaur(ctx):
 
     await ctx.send(response)
 
-@client.command()
+@client.command(aliases=['rtop', 'rt', 'ranked_top'])
 async def top_ranked(ctx, *args):
     data = get_ranked_spreadsheet()
     table = get_initial_ranked_table()
@@ -183,7 +183,7 @@ async def top_ranked(ctx, *args):
         output = get_table_output(table)
         await ctx.send(output)
 
-@client.command()
+@client.command(aliases=['rtrainer', 'rtr', 'trainer_ranked'])
 async def ranked_trainer(ctx, *trainer_nickname):
     '''
     Busca o score de um trainer na ranked pelo nick do caboclo.
@@ -202,7 +202,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
     # loock-up trainer elo data
     nick = "**__"+ trainer[1] +"__**"
     elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
-    elo = elo_rank.lower().replace("á", "a")
+    elo = get_elo_name(elo_rank)
     elo_data = [item for item in elos_map if item[0] == elo][0]
 
     # setup embed data
@@ -218,7 +218,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
     
     await ctx.send(nick, embed=embed)
 
-@client.command()
+@client.command(aliases=['relo', 're', 'elo_ranked'])
 async def ranked_elo(ctx, *elo_arg):
     '''
     Retorna todos os treinadores que estão no Rank Elo solicitado.
@@ -251,7 +251,7 @@ async def ranked_elo(ctx, *elo_arg):
     output = get_table_output(table)
     await ctx.send(output)
 
-@client.command()
+@client.command(aliases=['rvalid', 'rv'])
 async def ranked_validate(ctx):
     '''
     Valida as entradas pendentes do formulário de registro de batalhas
@@ -349,14 +349,14 @@ def get_table_output(table):
 
 def get_embed_output(ranked_table):
     rank_index = ranked_table[0].index("Rank")
-    trainer1_elo_data = [item for item in elos_map if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
+    trainer1_elo_map = [item for item in elos_map if item[0] == get_elo_name(ranked_table[1][rank_index])][0]
     pts_size = len(str(ranked_table[1][4]))
     
-    embed = discord.Embed(color=trainer1_elo_data[COLOR_INDEX], type="rich")
+    embed = discord.Embed(color=trainer1_elo_map[COLOR_INDEX], type="rich")
     embed.set_thumbnail(url="https://uploaddeimagens.com.br/images/002/296/393/original/abp_logo.png")
     
     for i, trainer in enumerate(ranked_table[1:21], start=1):
-        elo = trainer[rank_index].lower().replace("á", "a")
+        elo = get_elo_name(trainer[rank_index])
         emoji = get(client.emojis, name=elo)
 
         title = "{0} {1}º - {2}".format(str(emoji), str(i), trainer[1])

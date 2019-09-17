@@ -8,10 +8,13 @@ class Elos(Enum):
     platina      = 4
     diamante     = 5
     mestre       = 6
-    grandmestre  = 7
+    graomestre   = 7
 
 def get_elo(elo_name):
-    return Elos[elo_name.lower().replace("á", "a")]
+    return Elos[get_elo_name(elo_name)]
+
+def get_elo_name(elo_name):
+    return elo_name.lower().replace("á", "a").replace("ã", "a").replace(" ", "")
 
 def validate_elo_battle(elo1, elo2):
     diff = abs(elo1.value - elo2.value)

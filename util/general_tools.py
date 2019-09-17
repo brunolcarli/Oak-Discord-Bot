@@ -32,7 +32,7 @@ def get_trainer_rank(pts):
     Platina 750 - 849
     Diamante 850 - 949
     Mestre 950- 999
-    Grand mestre 1000
+    Grão Mestre 1000
     '''
     pts = int(pts)
     if pts < 100:
@@ -50,7 +50,7 @@ def get_trainer_rank(pts):
     elif pts >= 950 and pts < 1000:
         rank = 'Mestre'
     elif pts >= 1000:
-        rank = 'Grande Mestre'
+        rank = 'Grão Mestre'
     return rank
 
 def sort_trainers(data):
@@ -90,4 +90,4 @@ def get_spreadsheet_data(spreadSheetId, cellRange):
 
 def compare_insensitive(s1, s2):
     # TODO: improve it to ignore all special characters
-    return s1.strip().lower().replace("á", "a") == s2.strip().lower().replace("á", "a")
+    return s1.strip().lower().replace("á", "a").replace("ã", "a") == s2.strip().lower().replace("á", "a").replace("ã", "a")
