@@ -22,7 +22,7 @@ from settings import (LISA_URL, SCORE_INDEX, ADMIN_CHANNEL,
 
 # general tools
 from util.showdown_battle import load_battle_replay
-from util.elos import get_elo, validate_elo_battle, ELOS_MAP
+from util.elos import get_elo, get_elo_name, validate_elo_battle, ELOS_MAP
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet,
                                 compare_insensitive, get_embed_output,
@@ -165,7 +165,7 @@ async def random_pokemon(ctx):
     await ctx.send(response)
 
 
-@client.command()
+@client.command(aliases=['top', 'rt', 'ranked_top'])
 async def top_ranked(ctx, *args):
     """
     Informa os 20 primeiros colocados da Ranked ABP.
@@ -177,7 +177,8 @@ async def top_ranked(ctx, *args):
         ["list", "lista", "elos"],
         ["table", "tabela"]
     ]
-    is_list = len(args) > 0 and args[0].strip().lower() in view_types[0]
+    is_table = len(args) > 0 and args[0].strip().lower() in view_types[1]
+    is_list = not is_table
 
     for i, trainer in enumerate(data[:20], start=1):
         trainer = get_trainer_rank_row(trainer, i)
@@ -193,7 +194,7 @@ async def top_ranked(ctx, *args):
         await ctx.send(output)
 
 
-@client.command()
+@client.command(aliases=['trainer', 'trainer_ranked'])
 async def ranked_trainer(ctx, *trainer_nickname):
     """
     Busca o score de um trainer na ranked pelo nick do caboclo.
@@ -212,7 +213,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
             # lookup for the trainer elo data
             nick = "**__" + trainer[1] + "__**"
             elo_rank = get_trainer_rank(trainer[SCORE_INDEX])
-            elo = elo_rank.lower().replace("á", "a")
+            elo = get_elo_name(elo_rank)
             elo_data = [item for item in ELOS_MAP if item[0] == elo][0]
 
             # setup embed data
@@ -229,7 +230,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
             await ctx.send(nick, embed=embed)
 
 
-@client.command()
+@client.command(aliases=['elo', 'elo_ranked'])
 async def ranked_elo(ctx, *elo_arg):
     """
     Retorna todos os treinadores que estão no Rank Elo solicitado.
@@ -262,7 +263,7 @@ async def ranked_elo(ctx, *elo_arg):
             await ctx.send(output)
 
 
-@client.command()
+@client.command(aliases=['valid', 'rv'])
 async def ranked_validate(ctx):
     """
     Valida as entradas pendentes do formulário de registro de batalhas
