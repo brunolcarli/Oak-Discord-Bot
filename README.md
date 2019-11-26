@@ -8,7 +8,7 @@
 
 PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
 
-![Generic badge](https://img.shields.io/badge/version-0.0.1-green.svg)
+![Generic badge](https://img.shields.io/badge/version-0.0.2-green.svg)
 
 
 </td></tr></table>
