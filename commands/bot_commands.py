@@ -25,9 +25,13 @@ from util.showdown_battle import load_battle_replay
 from util.elos import get_elo, get_elo_name, validate_elo_battle, ELOS_MAP
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet,
+                                get_trainer_database_spreadsheet, 
+                                get_trainer_db_table, get_random_profile,
                                 compare_insensitive, get_embed_output,
                                 get_table_output, get_trainer_rank_row,
-                                get_initial_ranked_table, find_trainer)
+                                get_initial_ranked_table, find_trainer, 
+                                find_db_trainer, get_discord_member,
+                                get_value_or_default)
 
 # requests tools
 from util.get_api_data import (dex_information, get_pokemon_data,
@@ -337,3 +341,64 @@ async def ranked_validate(ctx):
                 await ctx.send(output)
     else:
         await ctx.send("Comando restrito!")
+
+@client.command(aliases=['db', 'bd', 'abp-db', 'trainer_db', 'trainer_names'])
+async def abp_db(ctx, *trainer_arg):
+    """
+    Retorna todos os treinadores que estão cadastrados na ABP.
+    """
+    if trainer_arg:
+        trainer_nickname = ' '.join(word for word in trainer_arg)
+        trainer = find_db_trainer(trainer_nickname)
+
+        if not trainer:
+            return await ctx.send('Treinador não encontrado')
+
+        # lookup for the trainer as discord member
+        nick = "**__" + trainer[0] + "__**"
+        trainer_discord = get_discord_member(client, trainer[1])
+        
+        rnd_profile = get_random_profile()
+        color = (trainer_discord.color) if trainer_discord is not None else rnd_profile[0]
+        avatar = (trainer_discord.avatar_url) if trainer_discord is not None else rnd_profile[1]
+
+        # setup embed data
+        embed = discord.Embed(color=color, type="rich")
+        embed.set_thumbnail(url=avatar)
+        
+        embed.add_field(name="Discord", value=get_value_or_default(trainer, 1), inline=False)
+        embed.add_field(name="Switch FC", value=get_value_or_default(trainer, 2), inline=False)
+        embed.add_field(name="Showdown", value=get_value_or_default(trainer, 3), inline=False)
+
+        await ctx.send(nick, embed=embed)
+
+    else:
+        max_data = 10
+        data = get_trainer_database_spreadsheet()
+        table = get_trainer_db_table()
+
+        if len(data) > max_data:
+            for i in range(1, max_data):
+                pos = randint(0, len(data)-1)
+                table.append(data[pos])
+                del data[pos]
+        else:
+            table.extend(data)
+
+        # only table header
+        if len(table) == 1:
+            return await ctx.send('Treinadores não encontrados!')
+
+        # show list of trainers
+        embed = discord.Embed(color=0x1E1E1E, type="rich")
+        embed.set_thumbnail(url="http://bit.ly/abp_logo")
+
+        for i, trainer in enumerate(table[1:max_data+1], start=1):
+            title = "{0} - {1}".format(trainer[0], get_value_or_default(trainer, 1, "n/a"))
+            details = "FC: `{0}` | SD: `{1}`".format(get_value_or_default(trainer, 2), 
+                                                     get_value_or_default(trainer, 3))
+
+            embed.add_field(name=title, value=details, inline=False)
+
+        description = "**__Players__** - Você pode executar de novo e ver outros jogadores..."
+        await ctx.send(description, embed=embed)
