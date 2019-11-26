@@ -17,7 +17,7 @@ import discord
 from discord.ext import commands
 
 # settings constants
-from settings import (LISA_URL, SCORE_INDEX, ADMIN_CHANNEL,
+from settings import (BACKEND_URL, SCORE_INDEX, ADMIN_CHANNEL,
                       COLOR_INDEX, ELO_IMG_INDEX)
 
 # general tools
@@ -126,7 +126,7 @@ async def quote(ctx, *phrase):
             'content-type': "application/json"
             }
         payload = part_1 + quoted + part_2
-        response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+        response = requests.request("POST", BACKEND_URL, data=payload, headers=headers)
         response = json.loads(response.text)
         response = response['data']['createAbpQuote'].get('response')
 
@@ -148,7 +148,7 @@ async def random_quote(ctx):
         }
 
     # TODO Exchange requests for gql module
-    response = requests.request("POST", LISA_URL, data=payload, headers=headers)
+    response = requests.request("POST", BACKEND_URL, data=payload, headers=headers)
     response = json.loads(response.text)
     quotes = response['data'].get('abpQuotes')
 
