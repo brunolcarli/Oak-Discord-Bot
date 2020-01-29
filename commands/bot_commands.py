@@ -18,7 +18,7 @@ from discord.ext import commands
 
 # settings constants
 from settings import (BACKEND_URL, SCORE_INDEX, ADMIN_CHANNEL,
-                      COLOR_INDEX, ELO_IMG_INDEX)
+                      COLOR_INDEX, ELO_IMG_INDEX, BILL_API_URL)
 
 # general tools
 from util.showdown_battle import load_battle_replay
@@ -31,13 +31,17 @@ from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_table_output, get_trainer_rank_row,
                                 get_initial_ranked_table, find_trainer, 
                                 find_db_trainer, get_discord_member,
-                                get_value_or_default)
+                                get_value_or_default,
+                                get_initial_ranked_table, find_trainer,
+                                get_gql_client)
 
 # requests tools
 from util.get_api_data import (dex_information, get_pokemon_data,
                                get_item_data, item_information,
                                get_ability_data, ability_information)
 
+
+from commands.queries import get_leagues
 
 client = commands.Bot(command_prefix='/')
 
@@ -223,7 +227,7 @@ async def ranked_trainer(ctx, *trainer_nickname):
             # setup embed data
             embed = discord.Embed(color=elo_data[COLOR_INDEX], type="rich")
             embed.set_thumbnail(url=elo_data[ELO_IMG_INDEX])
-            
+
             embed.add_field(name="Pos", value=trainer[6], inline=True)
             embed.add_field(name="Elo", value=elo_rank, inline=True)
             embed.add_field(name="Wins", value=trainer[2], inline=True)
@@ -378,7 +382,7 @@ async def abp_db(ctx, *trainer_arg):
         table = get_trainer_db_table()
 
         if len(data) > max_data:
-            for i in range(1, max_data):
+            for _ in range(1, max_data):
                 pos = randint(0, len(data)-1)
                 table.append(data[pos])
                 del data[pos]
@@ -393,7 +397,7 @@ async def abp_db(ctx, *trainer_arg):
         embed = discord.Embed(color=0x1E1E1E, type="rich")
         embed.set_thumbnail(url="http://bit.ly/abp_logo")
 
-        for i, trainer in enumerate(table[1:max_data+1], start=1):
+        for _, trainer in enumerate(table[1:max_data+1], start=1):
             title = "{0} - {1}".format(trainer[0], get_value_or_default(trainer, 1, "n/a"))
             details = "FC: `{0}` | SD: `{1}`".format(get_value_or_default(trainer, 2), 
                                                      get_value_or_default(trainer, 3))
@@ -402,3 +406,33 @@ async def abp_db(ctx, *trainer_arg):
 
         description = "**__Players__** - Você pode executar de novo e ver outros jogadores..."
         await ctx.send(description, embed=embed)
+
+##########################################
+# Comandos de interação com Bill
+##########################################
+
+@client.command()
+async def view_leagues(ctx):
+    payload = get_leagues()
+    client = get_gql_client(BILL_API_URL)
+    response = client.execute(payload)
+
+    leagues = [edge.get('node') for edge in response['leagues'].get('edges')]
+
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+    embed.set_thumbnail(url="http://bit.ly/abp_logo")
+
+    for league in leagues:
+        league_id = league.get('id', '?')
+        reference = league.get('reference', '?')
+        start_date = league.get('start_Date', '?')
+        end_date = league.get('end_date', '?')
+        league_description = league.get('description') or 'No description'
+
+        body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
+               f'`{league_description}`'
+
+        embed.add_field(name=reference, value=body, inline=False)
+
+    description = 'Ligas Pokémon ABP'
+    await ctx.send(description, embed=embed)
