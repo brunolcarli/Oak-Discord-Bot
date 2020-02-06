@@ -55,13 +55,13 @@ Assim que tiver gerado seu `token` e dado acesso ao bot via página do Discord D
 TOKEN=dgyausgdhuisegfdyuesnciosbedtyfvdsvufsuydtfcgjksgfdytsd
 ```
 
-Alguns comandos são direcionados à API [Lisa](https://github.com/brunolcarli/Lisa) no backend para gravação permanente de dados.
+Alguns comandos são direcionados à API [Bill](https://github.com/brunolcarli/Bill) no backend para gravação permanente de dados.
 Neste caso é preciso que o server seja levantado e o host seja inserido no mesmo arquivo `.env`.
 
 Ex:
 
 ```
-LISA=http://localhost:8000
+BILL=http://localhost:3122/graphql/
 ```
 
 
