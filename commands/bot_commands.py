@@ -7,10 +7,15 @@ facilitando a identificação e manutenção dos comandos.
 """
 
 # std libs
+from ast import literal_eval
+from sys import stdout
 from random import choice, randint
 from datetime import datetime
 import json
 import requests
+
+# 3rd Party libs usefull tools
+from dateutil import parser
 
 # Discord tools
 import discord
@@ -39,9 +44,9 @@ from util.general_tools import (get_similar_pokemon, get_trainer_rank,
 from util.get_api_data import (dex_information, get_pokemon_data,
                                get_item_data, item_information,
                                get_ability_data, ability_information)
-
-
-from commands.queries import get_leagues
+from util.oak_errors import CommandErrors
+from commands.queries import get_leagues, get_trainers
+from commands.mutations import create_trainer
 
 client = commands.Bot(command_prefix='/')
 
@@ -425,8 +430,8 @@ async def view_leagues(ctx):
     for league in leagues:
         league_id = league.get('id', '?')
         reference = league.get('reference', '?')
-        start_date = league.get('start_Date', '?')
-        end_date = league.get('end_date', '?')
+        start_date = league.get('startDate', '?')
+        end_date = league.get('endDate', '?')
         league_description = league.get('description') or 'No description'
 
         body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
@@ -436,3 +441,111 @@ async def view_leagues(ctx):
 
     description = 'Ligas Pokémon ABP'
     await ctx.send(description, embed=embed)
+
+
+# @client.command()
+# async def view_trainers(ctx):
+#     payload = get_trainers()
+#     client = get_gql_client(BILL_API_URL)
+#     response = client.execute(payload)
+
+#     trainers = [edge.get('node') for edge in response['trainers'].get('edges')]
+
+#     embed = discord.Embed(color=0x1E1E1E, type="rich")
+#     embed.set_thumbnail(url="http://bit.ly/abp_logo")
+
+#     for trainer in trainers:
+#         trainer_id = trainer.get('id', '?')
+#         name = trainer.get('name', '?')
+#         join_date = trainer.get('joinDate', '?')
+#         battle_counter = trainer.get('battleCounter', '?')
+#         win_percentage = trainer.get('winPercentage', '?')
+
+
+#         body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
+#                f'`{league_description}`'
+
+#         embed.add_field(name=reference, value=body, inline=False)
+
+#     description = 'Ligas Pokémon ABP'
+#     await ctx.send(description, embed=embed)
+
+# @client.command()
+# async def foo(ctx, param=None, value=None):
+#     a_valid_intention = param and value
+#     if not a_valid_intention:
+#         return await ctx.send('Chamada inválida ao comando!')
+
+
+@client.command()
+async def new_trainer(bot, discord_id=None):
+    """
+    Solicita a criação de um novo treinador ao banco de dados.
+    """
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    # Se não fornecer o discord ID
+    if not discord_id:
+        title = 'Por favor marque o treinador a ser registrado!'
+        embed.add_field(name='Exemplo', value='`/new_trainer @username`', inline=False)
+        return await bot.send(title, embed=embed)
+
+    # Verifica se é administrador ou auto registro
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]
+    is_self_registering = discord_id == f'<@{bot.author.id}>'
+
+    # Somente adms criam treinador e ou o proprio treinador pode se registrar
+    if not is_adm and not is_self_registering:
+        title = ':octagonal_sign:'
+        embed.add_field(
+            name='Pemissão negada',
+            value='Você não tem permissão para registrar um treinador!',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
+
+    # Verifica que o discord_id fornecido é um usuário do servidor
+    guild_member = next(
+        iter(
+            [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
+            ),
+        None  # default
+    )
+    if not guild_member:
+        return await bot.send('Trainador inválido!')  # TODO Retornar Oak Error
+
+    payload = create_trainer(discord_id)
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+
+        is_unique = literal_eval(err.args[0]).get('message').startswith('UNIQUE')
+        if is_unique:
+            return await bot.send('Este treinador já está registrado!')            
+        return await bot.send(
+            'Sinto muito. Não pude processar esta operação.\n'\
+            'Por favor, tente novamente mais tarde'
+        )  # TODO retornar Oak error
+
+    trainer = response['createTrainer'].get('trainer')
+    join_date = parser.parse(trainer.get('joinDate')).strftime('%d/%m/%Y')
+
+    # retorna usuario registrado
+    embed.set_thumbnail(url=guild_member.avatar_url._url)
+    description = 'Bem vindo Vindo a liga ABP.\nAqui está seu Trainer Card:'
+    embed.add_field(name='ID Discord:', value=trainer.get('discordId'), inline=True)
+    embed.add_field(name='Nome:', value=guild_member.name, inline=True)
+    embed.add_field(name='Registro:', value=join_date, inline=False)
+    embed.add_field(name='Lv:', value=trainer.get('lv'), inline=True)
+    embed.add_field(name='Next:', value=trainer.get('nextLv'), inline=True)
+    embed.add_field(name='Exp.:', value=trainer.get('exp'), inline=True)
+    embed.add_field(name='Batalhas:', value=trainer.get('battleCounter'), inline=True)
+    embed.add_field(name='Insígnias:', value=trainer.get('badgeCounter'), inline=True)
+    embed.add_field(name='Ligas:', value=trainer.get('leaguesCounter'), inline=True)
+    embed.add_field(name='% Vitórias:', value=trainer.get('winPercentage'), inline=True)
+    embed.add_field(name='% Derrotas:', value=trainer.get('loosePercentage'), inline=True)
+
+    await bot.send(description, embed=embed)
