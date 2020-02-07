@@ -28,8 +28,6 @@ class Mutations:
             lv
             exp
             nextLv
-            fc
-            sdId
           }}
         }}
       }}
@@ -53,4 +51,31 @@ class Mutations:
       }}
     '''
     return gql(mutation)
-  
+
+  @staticmethod
+  def create_leader(discord_id, poke_type, role):
+    mutation = f'''
+    mutation{{
+      createLeader(input:{{
+        discordId: "{discord_id}"
+        pokemonType: {poke_type}
+        role: {role}
+      }}){{
+        leader{{
+          id
+          name
+          role
+          pokemonType
+          joinDate
+          battleCounter
+          winPercentage
+          loosePercentage
+          discordId
+          lv
+          nextLv
+          exp
+        }}
+      }}
+    }}
+    '''
+    return gql(mutation)

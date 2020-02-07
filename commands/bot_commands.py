@@ -515,7 +515,7 @@ async def new_trainer(bot, discord_id=None):
         None  # default
     )
     if not guild_member:
-        return await bot.send('Trainador inválido!')  # TODO Retornar Oak Error
+        return await bot.send('Treinador inválido!')  # TODO Retornar Oak Error
 
     payload = Mutations.create_trainer(discord_id)
     client = get_gql_client(BILL_API_URL)
@@ -553,10 +553,11 @@ async def new_trainer(bot, discord_id=None):
 
     await bot.send(description, embed=embed)
 
+
 @client.command()
 async def new_league(bot, *reference):
     """
-    Encia uma requisição solicitando a criação de uma nova liga.
+    Envia uma requisição solicitando a criação de uma nova liga.
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -601,4 +602,77 @@ async def new_league(bot, *reference):
     description = 'Liga Registrada com sucesso!'
     embed.add_field(name='ID:', value=league.get('id'), inline=True)
     embed.add_field(name='Referência:', value=league.get('reference'), inline=True)
+    return await bot.send(description, embed=embed)
+
+
+@client.command()
+async def new_leader(bot, *args):
+    """
+    Envia uma requisição solicitando a criação de um novo líder.
+    """
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    # somente administradores podem registrar ligas
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+
+    if not is_adm:
+        title = ':octagonal_sign:'
+        embed.add_field(
+            name='Pemissão negada',
+            value='Você não tem permissão para registrar um Líder!',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
+
+    if len(args) is not 3:
+        title = 'Preciso que me informe **três** parâmetros **exatamente** nesta ordem!'
+        embed.add_field(name='Exemplo 1', value='`/new_leader @fulano fire gym_leader`', inline=False)
+        embed.add_field(name='Exemplo 2', value='`/new_leader @ciclano fairy elite_four`', inline=False)
+        embed.add_field(name='Exemplo 3', value='`/new_leader @fulano grass champion`', inline=False)
+        return await bot.send(title, embed=embed)
+
+    discord_id, poke_type, role = args
+    # Verifica que o discord_id fornecido é um usuário do servidor
+    guild_member = next(
+        iter(
+            [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
+            ),
+        None  # default
+    )
+    if not guild_member:
+        return await bot.send('Trainador inválido!')  # TODO Retornar Oak Error
+
+    payload = Mutations.create_leader(
+        discord_id,
+        poke_type.upper(),
+        role.upper()
+    )
+    client = get_gql_client(BILL_API_URL)
+    
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+
+        is_unique = literal_eval(err.args[0]).get('message').startswith('UNIQUE')
+        if is_unique:
+            return await bot.send('Este líder já está registrado!')            
+        return await bot.send(
+            'Sinto muito. Não pude processar esta operação.\n'\
+            'Por favor, tente novamente mais tarde'
+        )  # TODO retornar Oak error
+
+    leader = response['createLeader'].get('leader')
+
+    # retorna usuario registrado
+    embed.set_thumbnail(url=guild_member.avatar_url._url)
+    description = 'Registro de líder sucedido:'
+    embed.add_field(name='ID Discord:', value=leader.get('discordId'), inline=True)
+    embed.add_field(name='Nome:', value=guild_member.name, inline=True)
+    embed.add_field(name='Lv:', value=leader.get('lv'), inline=True)
+    embed.add_field(name='Next:', value=leader.get('nextLv'), inline=True)
+    embed.add_field(name='Exp.:', value=leader.get('exp'), inline=True)
+    embed.add_field(name='Batalhas:', value=leader.get('battleCounter'), inline=True)
+    embed.add_field(name='% Vitórias:', value=leader.get('winPercentage'), inline=True)
+    embed.add_field(name='% Derrotas:', value=leader.get('loosePercentage'), inline=True)
     return await bot.send(description, embed=embed)
