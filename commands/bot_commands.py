@@ -28,6 +28,8 @@ from settings import (BACKEND_URL, SCORE_INDEX, ADMIN_CHANNEL,
 # general tools
 from util.showdown_battle import load_battle_replay
 from util.elos import get_elo, get_elo_name, validate_elo_battle, ELOS_MAP
+
+# TODO talvez muitas destas funções pudessem ser encapsuladas em uma classe
 from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 get_ranked_spreadsheet, get_form_spreadsheet,
                                 get_trainer_database_spreadsheet, 
@@ -46,7 +48,7 @@ from util.get_api_data import (dex_information, get_pokemon_data,
                                get_ability_data, ability_information)
 from util.oak_errors import CommandErrors
 from commands.queries import get_leagues, get_trainers
-from commands.mutations import create_trainer
+from commands.mutations import Mutations
 
 client = commands.Bot(command_prefix='/')
 
@@ -477,6 +479,7 @@ async def view_leagues(ctx):
 #         return await ctx.send('Chamada inválida ao comando!')
 
 
+# TODO encapsulate the algorithm inside thos func to a dedicated module
 @client.command()
 async def new_trainer(bot, discord_id=None):
     """
@@ -514,7 +517,7 @@ async def new_trainer(bot, discord_id=None):
     if not guild_member:
         return await bot.send('Trainador inválido!')  # TODO Retornar Oak Error
 
-    payload = create_trainer(discord_id)
+    payload = Mutations.create_trainer(discord_id)
     client = get_gql_client(BILL_API_URL)
 
     try:
@@ -549,3 +552,53 @@ async def new_trainer(bot, discord_id=None):
     embed.add_field(name='% Derrotas:', value=trainer.get('loosePercentage'), inline=True)
 
     await bot.send(description, embed=embed)
+
+@client.command()
+async def new_league(bot, *reference):
+    """
+    Encia uma requisição solicitando a criação de uma nova liga.
+    """
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    # somente administradores podem registrar ligas
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+
+    if not is_adm:
+        title = ':octagonal_sign:'
+        embed.add_field(
+            name='Pemissão negada',
+            value='Você não tem permissão para registrar uma liga!',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
+
+    # Se não fornecer o discord ID
+    if not reference:
+        title = 'Por favor insira um nome ou referência para esta Liga!'
+        embed.add_field(name='Exemplo', value='`/new_league Liga 2020`', inline=False)
+        return await bot.send(title, embed=embed)
+
+    reference = ' '.join(word for word in reference)
+
+    payload = Mutations.create_league(reference)
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+
+        is_unique = literal_eval(err.args[0]).get('message').startswith('UNIQUE')
+        if is_unique:
+            return await bot.send('Esta liga já está registrada!')            
+        return await bot.send(
+            'Sinto muito. Não pude processar esta operação.\n'\
+            'Por favor, tente novamente mais tarde'
+        )  # TODO retornar Oak error
+
+    league = response['createLeague'].get('league')
+
+    description = 'Liga Registrada com sucesso!'
+    embed.add_field(name='ID:', value=league.get('id'), inline=True)
+    embed.add_field(name='Referência:', value=league.get('reference'), inline=True)
+    return await bot.send(description, embed=embed)
