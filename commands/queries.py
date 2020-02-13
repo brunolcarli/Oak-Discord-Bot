@@ -4,84 +4,93 @@ serviço de ligas da ABP: Bill API
 """
 from gql import gql
 
-def get_leagues(**kwargs):
+
+class Query:
     """
-    Retorna a query de ligas
+    Queries GraphQL
     """
 
-    query = """
-    query{
-        leagues{
-            edges{
-                node{
-                    id
-                    reference
-                    startDate
-                    endDate
-                    description
-                    gymLeaders{
+    @staticmethod
+    def get_leagues(id=None):
+        """
+        Retorna a query de ligas
+        """
+        filters = '' if not id else f'(id:"{id}")' 
+        query = '''
+        query {
+            leagues %s {
+                edges{
+                    node{
+                        id
+                        reference
+                        startDate
+                        endDate
+                        description
+                        gymLeaders{
+                            edges{
+                                node{
+                                    id
+                                    name
+                                    pokemonType
+                                }
+                            }
+                        }
+                        eliteFour{
                         edges{
                             node{
                                 id
                                 name
                                 pokemonType
-                            }
+                                }
                         }
-                    }
-                    eliteFour{
-                    edges{
-                        node{
+                        }
+                        champion{
                             id
                             name
                             pokemonType
+                        }
+                        competitors{
+                        edges{
+                            node{
+                                id
+                                name
+                                joinDate
                             }
-                    }
-                    }
-                    champion{
-                        id
-                        name
-                        pokemonType
-                    }
-                    competitors{
-                    edges{
-                        node{
+                        }
+                        }
+                        winner{
                             id
                             name
-                            joinDate
                         }
                     }
-                    }
-                    winner{
+                }
+            }
+        }
+        ''' % filters
+
+        return gql(query)
+
+    @staticmethod
+    def get_trainers(**kwargs):
+        """
+        Retorna a query de treinadores
+        """
+        filters = ' '.join([f'{k}:"{v}"' for k, v in kwargs.items()])
+        query = '''
+        query {
+            trainers %s {
+                edges{
+                    node{
                         id
                         name
+                        joinDate
+                        battleCounter
+                        winPercentage
+                        loosePercentage
                     }
                 }
             }
         }
-    }
-    """
-    return gql(query)
+        ''' % '' if not filters else f'({filters})'
 
-
-def get_trainers(**kwargs):
-    """
-    Retorna a query de treinadores
-    """
-    query = '''
-    query{
-        trainers{
-            edges{
-                node{
-                    id
-                    name
-                    joinDate
-                    battleCounter
-                    winPercentage
-                    loosePercentage
-                }
-            }
-        }
-    }
-    '''
-
-    return gql(query)
+        return gql(query)
