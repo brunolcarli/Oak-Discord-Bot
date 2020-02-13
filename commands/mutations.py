@@ -79,3 +79,19 @@ class Mutations:
     }}
     '''
     return gql(mutation)
+
+  @staticmethod
+  def league_registration(discord_id, league_id, is_trainer):
+    is_trainer = str(is_trainer).lower()
+    mutation = f'''
+    mutation{{
+      leagueRegistration(input:{{
+        discordId: "{discord_id}"
+        league: "{league_id}"
+        isTrainer: {is_trainer}
+      }}){{
+        registration
+      }}
+    }}
+    '''
+    return gql(mutation)
