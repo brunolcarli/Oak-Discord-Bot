@@ -47,7 +47,7 @@ from util.get_api_data import (dex_information, get_pokemon_data,
                                get_item_data, item_information,
                                get_ability_data, ability_information)
 from util.oak_errors import CommandErrors
-from commands.queries import get_leagues, get_trainers
+from commands.queries import Query
 from commands.mutations import Mutations
 
 client = commands.Bot(command_prefix='/')
@@ -418,32 +418,72 @@ async def abp_db(ctx, *trainer_arg):
 # Comandos de interação com Bill
 ##########################################
 
+# TODO Retornar erro ao nao enviar um id valido
 @client.command()
-async def view_leagues(ctx):
-    payload = get_leagues()
+async def view_leagues(bot, league_id=None):
+    """
+    Consulta as ligas cadastardas.
+
+    Para consultar uma lista de todas as ligas:
+    ```
+    /view_leagues
+    ```
+
+    Para consultar dados de uma liga específica pode-se fornecer o id da liga:
+    ```
+    /view_leagues Ha5Hb4s364dAL1gA==
+    ```
+
+    """
+
+    # busca todas as ligas
+    if not league_id:
+        payload = Query.get_leagues()
+        client = get_gql_client(BILL_API_URL)
+        response = client.execute(payload)
+        
+        leagues = [edge.get('node') for edge in response['leagues'].get('edges')]
+
+        embed = discord.Embed(color=0x1E1E1E, type="rich")
+        embed.set_thumbnail(url="http://bit.ly/abp_logo")
+
+        for league in leagues:
+            league_id = league.get('id', '?')
+            reference = league.get('reference', '?')
+            start_date = league.get('startDate', '?')
+            end_date = league.get('endDate', '?')
+            league_description = league.get('description') or 'No description'
+
+            body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
+                f'`{league_description}`'
+
+            embed.add_field(name=reference, value=body, inline=False)
+
+        description = 'Ligas Pokémon ABP'
+        return await bot.send(description, embed=embed)
+
+    payload = Query.get_leagues(id=league_id)
     client = get_gql_client(BILL_API_URL)
     response = client.execute(payload)
 
-    leagues = [edge.get('node') for edge in response['leagues'].get('edges')]
+    leagues = response['leagues']['edges']
+    if not leagues:
+        return #erro
 
+    league = leagues[0]
     embed = discord.Embed(color=0x1E1E1E, type="rich")
     embed.set_thumbnail(url="http://bit.ly/abp_logo")
+    embed.add_field(name='ID', value=league['node'].get('id'), inline=True)
+    embed.add_field(name='Referência', value=league['node'].get('reference'), inline=True)
+    embed.add_field(name='Início', value=league['node'].get('startDate'), inline=True)
+    embed.add_field(name='Fim', value=league['node'].get('endDate'), inline=True)
+    embed.add_field(
+        name='Competidores',
+        value=len(league['node']['competitors'].get('edges')),
+        inline=False
+    )
 
-    for league in leagues:
-        league_id = league.get('id', '?')
-        reference = league.get('reference', '?')
-        start_date = league.get('startDate', '?')
-        end_date = league.get('endDate', '?')
-        league_description = league.get('description') or 'No description'
-
-        body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
-               f'`{league_description}`'
-
-        embed.add_field(name=reference, value=body, inline=False)
-
-    description = 'Ligas Pokémon ABP'
-    await ctx.send(description, embed=embed)
-
+    return await bot.send('Aqui', embed=embed)
 
 # @client.command()
 # async def view_trainers(ctx):
@@ -676,3 +716,85 @@ async def new_leader(bot, *args):
     embed.add_field(name='% Vitórias:', value=leader.get('winPercentage'), inline=True)
     embed.add_field(name='% Derrotas:', value=leader.get('loosePercentage'), inline=True)
     return await bot.send(description, embed=embed)
+
+# TODO
+@client.command()
+async def league_register(bot, *args):
+    """
+    Solicita a API a inscrição de um jogador em uma liga pokemon.
+    Deve-se fornecer um parâmetro informando se o jogador é um treinador
+    que irá competir na liga ou um líder que irá defender a liga.
+    Params:
+                -t : Treinador
+                -l : Líder
+
+    Em caso de registro de treinador fornecer o parâmetro seguido do id discord:
+    Ex:
+                -t @Username HashIdDaLiga==
+
+    Em caso de registro de líder deve-se fornecer também o tipo de pokemon e
+    papel do líder, separados pelo caracter underscore (_)
+    Ex:
+                -l @Username HashIdDaLiga==
+
+    """
+
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    # somente administradores podem registrar jogadores nas ligas
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+
+    if not is_adm:
+        title = ':octagonal_sign:'
+        embed.add_field(
+            name='Pemissão negada',
+            value='Você não tem permissão para isso!',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
+
+    if len(args) < 3:
+        title = 'Parâmetros ausêntes :octagonal_sign:'
+        example = 'Por favor forneça os parâmetros corretamente!\n'\
+                  '\nPara registrar um treinador em uma liga:\n'\
+                  '`/league_register -t @username id_liga`'\
+                  '\n\nPara registrar um líder em uma liga:\n'\
+                  '`/league_register -l @username id_liga\n`'\
+                  '\n\nVocê pode enviar `/help league_register` para mais ajuda!\n'
+        embed.add_field(
+            name='Exemplo',
+            value=example,
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
+
+    option, discord_id, league, *_ = args
+
+    options = {'-t': True, '-l': False}
+    if not option in options.keys():
+        return await bot.send('Aceito somente as opções `-t` e `-l`')
+
+    payload = Mutations.league_registration(discord_id, league, options[option])
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+        error_message = literal_eval(err.args[0]).get('message')
+        is_unique = 'already registered' in error_message
+        if is_unique:
+            return await bot.send('Este usuário já foi registrado!')
+
+        does_not_exist = 'does not exist' in error_message
+        if does_not_exist:
+            return await bot.send(
+                'Este usuário não foi registrado!\n\nDica: `/help new_trainer`'
+            )
+
+        return await bot.send(
+            'Sinto muito. Não pude processar esta operação.\n'\
+            'Por favor, tente novamente mais tarde'
+        )  # TODO retornar Oak error
+
+    return await bot.send(response['leagueRegistration'].get('registration'))
