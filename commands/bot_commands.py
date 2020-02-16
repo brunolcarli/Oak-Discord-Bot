@@ -40,7 +40,7 @@ from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 find_db_trainer, get_discord_member,
                                 get_value_or_default,
                                 get_initial_ranked_table, find_trainer,
-                                get_gql_client)
+                                get_gql_client, get_badge_icon)
 
 # requests tools
 from util.get_api_data import (dex_information, get_pokemon_data,
@@ -353,6 +353,7 @@ async def ranked_validate(ctx):
     else:
         await ctx.send("Comando restrito!")
 
+
 @client.command(aliases=['db', 'bd', 'abp-db', 'trainer_db', 'trainer_names'])
 async def abp_db(ctx, *trainer_arg):
     """
@@ -413,6 +414,7 @@ async def abp_db(ctx, *trainer_arg):
 
         description = "**__Players__** - Você pode executar de novo e ver outros jogadores..."
         await ctx.send(description, embed=embed)
+
 
 ##########################################
 # Comandos de interação com Bill
@@ -485,41 +487,89 @@ async def view_leagues(bot, league_id=None):
 
     return await bot.send('Aqui', embed=embed)
 
-# @client.command()
-# async def view_trainers(ctx):
-#     payload = get_trainers()
-#     client = get_gql_client(BILL_API_URL)
-#     response = client.execute(payload)
+# TODO
+@client.command()
+async def view_trainers(bot, discord_id=None):
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
 
-#     trainers = [edge.get('node') for edge in response['trainers'].get('edges')]
+    if not discord_id:
+        payload = Query.get_trainers()
+        client = get_gql_client(BILL_API_URL)
+        response = client.execute(payload)
 
-#     embed = discord.Embed(color=0x1E1E1E, type="rich")
-#     embed.set_thumbnail(url="http://bit.ly/abp_logo")
+        trainers = [edge.get('node') for edge in response['trainers'].get('edges')]
+        
 
-#     for trainer in trainers:
-#         trainer_id = trainer.get('id', '?')
-#         name = trainer.get('name', '?')
-#         join_date = trainer.get('joinDate', '?')
-#         battle_counter = trainer.get('battleCounter', '?')
-#         win_percentage = trainer.get('winPercentage', '?')
+        for trainer in trainers:
+            discord_id = trainer.get('discordId', '?')
+            battle_counter = trainer.get('battleCounter', '?')
+            lv = trainer.get('lv', '?')
+
+            embed.add_field(name="Discord", value=discord_id, inline=True)
+            embed.add_field(name="Lv", value=lv, inline=True)
+            embed.add_field(name="Batalhas", value=battle_counter, inline=True)
+            embed.add_field(name='_', value='__', inline=False)
+
+        description = 'Treinadores ABP'
+        embed.set_thumbnail(url="http://bit.ly/abp_logo")
+        return await bot.send(description, embed=embed)
+
+    # Caso seja fornecido um ID discord
+    guild_member = next(
+        iter(
+            [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
+            ),
+        None  # default
+    )
+    if not guild_member:
+        return await bot.send('Treinador inválido!')  # TODO Retornar Oak Error
+
+    payload = Query.get_trainers(id=discord_id)
+    client = get_gql_client(BILL_API_URL)
+    response = client.execute(payload)
+
+    trainers = [edge.get('node') for edge in response['trainers'].get('edges')]
+    if not trainers:
+        return await bot.send('Treinador não registrado!')
 
 
-#         body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
-#                f'`{league_description}`'
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
 
-#         embed.add_field(name=reference, value=body, inline=False)
+    discord_id = trainers[0].get('discordId', '?')
+    battle_counter = trainers[0].get('battleCounter', '?')
+    badge_counter = trainers[0].get('badgeCounter', '?')
+    leagues_counter = trainers[0].get('leaguesCounter', '?')
+    loose_percentage = trainers[0].get('loosePercentage', '?')
+    join_date = parser.parse(trainers[0].get('joinDate')).strftime('%d/%m/%Y')
+    win_percentage = trainers[0].get('winPercentage', '?')
+    lv = trainers[0].get('lv', '?')
+    exp = trainers[0].get('exp', '?')
+    next_lv = trainers[0].get('nextLv', '?')
 
-#     description = 'Ligas Pokémon ABP'
-#     await ctx.send(description, embed=embed)
+    description = f'Trainer Card de {discord_id}'
 
-# @client.command()
-# async def foo(ctx, param=None, value=None):
-#     a_valid_intention = param and value
-#     if not a_valid_intention:
-#         return await ctx.send('Chamada inválida ao comando!')
+    embed.set_thumbnail(url=guild_member.avatar_url._url)
+    embed.add_field(name="Registrado em", value=parser.parse(join_date), inline=True)
+    embed.add_field(name="Lv", value=lv, inline=True)
+    embed.add_field(name="Próximo Lv", value=next_lv, inline=True)
+    embed.add_field(name="Exp", value=exp, inline=True)
+    embed.add_field(name="Insígnias", value=badge_counter, inline=True)
+    embed.add_field(name="Batalhas", value=battle_counter, inline=True)
+    embed.add_field(name="% Vitorias", value='%.2f'%win_percentage, inline=True)
+    embed.add_field(name="% Derrotas", value='%.2f'%loose_percentage, inline=True)
+    embed.add_field(name="Ligas", value=leagues_counter, inline=True)
+
+    return await bot.send(description, embed=embed)
 
 
-# TODO encapsulate the algorithm inside thos func to a dedicated module
+@client.command()
+async def foo(ctx, param=None, value=None):
+    a_valid_intention = param and value
+    if not a_valid_intention:
+        return await ctx.send('Chamada inválida ao comando!')
+
+
+# TODO encapsulate the algorithm inside this func to a dedicated module
 @client.command()
 async def new_trainer(bot, discord_id=None):
     """
@@ -717,7 +767,8 @@ async def new_leader(bot, *args):
     embed.add_field(name='% Derrotas:', value=leader.get('loosePercentage'), inline=True)
     return await bot.send(description, embed=embed)
 
-# TODO
+
+# TODO review
 @client.command()
 async def league_register(bot, *args):
     """
@@ -798,3 +849,118 @@ async def league_register(bot, *args):
         )  # TODO retornar Oak error
 
     return await bot.send(response['leagueRegistration'].get('registration'))
+
+
+# TODO review
+@client.command()  # TODO add aliases
+async def battle_register(bot, *args):
+    """
+    TODO docstring
+    /battle_register ID_liga @trainer @leader @winner
+    """
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    # somente administradores podem registrar jogadores nas ligas
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+
+    if not is_adm:
+        title = ':octagonal_sign:'
+        return await bot.send(title, embed=embed)
+
+    if len(args) < 4:
+        title = 'Parâmetros incorretos :octagonal_sign:'
+        embed.add_field(
+            name='Exemplo de uso:',
+            value='`/battle_register HashD4l1g4== @treinador @lider @vencedor`',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)  # TODO retornar Oak param error
+
+    league, trainer, leader, winner, *_ = args
+    payload = Mutations.battle_registration(league, trainer, leader, winner)
+
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+        return await bot.send('Desculpe! Não pude realizar esta operação')
+
+    # TODO tratar possíveis erros
+    battle_date = response['battleRegister']['battle'].get('battleDatetime')
+    winner = next(
+        iter(
+            [member for member in bot.guild.members \
+                if member.id == int(response['battleRegister']['battle'].get('winner')[2:-1])]
+            ),
+        response['battleRegister']['battle'].get('winner')  # default
+    )
+    embed.set_thumbnail(url=winner.avatar_url._url)
+    embed.add_field(name='Data da batalha:', value=battle_date, inline=False)
+    embed.add_field(name='Vancedor:', value=winner.name, inline=False)    
+    # TODO mostrar quem X quem
+
+    return await bot.send('Batalha registrada!', embed=embed)
+
+
+@client.command()  #TODO add aliases
+async def add_badge(bot, discord_id=None, badge=None, league=None):
+    """
+    TODO docstring
+    """
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    a_valid_intention = discord_id and badge and league
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+    is_gym_leader = 'GYM LEADER' in [r.name for r in bot.author.roles]
+
+    if not is_adm and not is_gym_leader:
+        return await bot.send('Você não tem permissão para fazer isso')
+
+    if not a_valid_intention:
+        return await bot.send('Formato inválido!\nUso:\n`/add_badge @username dragon H4sHd4l1g4==`')
+
+    badges = set([
+        'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice', 'Fighting',
+        'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost',
+        'Dark', 'Dragon', 'Steel', 'Fairy'
+    ])
+
+    a_valid_badge = badge.title() in badges
+    if not a_valid_badge:
+        return await bot.send('Insígnia inválida!')  # TODO retornar Oak error
+
+    valid_member = next(
+        iter(
+            [member for member in bot.guild.members \
+                if member.id == int(discord_id[2:-1])]
+            ),
+        None,  # default
+    )
+
+    if not valid_member:
+        return await bot.send('Usuário inválido!')  # TODO retornar oak error
+
+    payload = Mutations.add_badge(discord_id, badge, league)
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+        error_message = literal_eval(err.args[0]).get('message')
+
+        if error_message == 'This trainer already have this badge!':
+            return await bot.send('Esse treinador ja possui esta insígnia!')
+
+        return await bot.send('Desculpe! Não pude realizar esta operação')
+
+    response = response['addBadgeToTrainer'].get('response')
+    if 'received' in response and 'badge' in response:
+        text = f'{discord_id} recebeu a insígnia {badge}!'
+        embed.set_thumbnail(url=get_badge_icon(badge.title()))
+
+        return await bot.send(text, embed=embed)
+
+    return await bot.send('Desculpe! Não pude realizar esta operação')
