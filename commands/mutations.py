@@ -133,3 +133,66 @@ class Mutations:
     }}
     '''
     return gql(mutation)
+
+  @staticmethod
+  def update_trainer(discord_id, name=None, fc=None, sd_id=None):
+    """
+    Requisição para Bill solicitando a alteração dos dados
+    de um treinador
+    """
+    mutation = f'''
+    mutation update_trainer{{
+      updateTrainer(input:{{
+        discordId: "{discord_id}"
+        name: "{name if name else ''}"
+        fc:"{fc if fc else ''}"
+        sdId: "{sd_id if sd_id else ''}"
+      }}) {{
+        trainer{{
+          name
+          sdId
+          fc
+          discordId
+        }}
+      }}
+    }}
+    '''
+
+    return gql(mutation)
+
+  @staticmethod
+  def update_leader(discord_id, **kwargs):
+    """
+    TODO docstring
+    """
+    poke_type = kwargs.get('poke_type')
+    poke_type = f'pokemonType: {poke_type.upper()}' if poke_type else ''
+
+    role = kwargs.get('role')
+    role = f'role: {role.upper()}' if role else ''
+
+    mutation = f'''
+    mutation{{
+      updateLeader(input:{{
+        discordId: "{discord_id}"
+        name: "{kwargs.get('name', '')}"
+        {poke_type}
+        {role}
+        fc:"{kwargs.get('fc', '')}"
+        sdId: "{kwargs.get('sd_id', '')}"
+        clauses: "{kwargs.get('clauses', '')}"
+      }}){{
+        leader{{
+          name
+          role
+          pokemonType
+          clauses
+          fc
+          sdId
+          discordId
+        }}
+      }}
+    }}
+    '''
+    print(mutation)
+    return gql(mutation)
