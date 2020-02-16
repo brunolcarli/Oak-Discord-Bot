@@ -102,3 +102,36 @@ class Query:
         ''' % filters
 
         return gql(query)
+
+    @staticmethod
+    def get_leaders(id=None):
+        """
+        Requisição solictando a consulta de líderes registrados
+        """
+        filters = '' if not id else f'(discordId_Icontains:"{id}")'
+        query = f'''
+          query {{
+            leaders {filters} {{
+              edges{{
+                node{{
+                  id
+                  discordId
+                  lv
+                  fc
+                  name
+                  role
+                  pokemonType
+                  joinDate
+                  battleCounter
+                  winPercentage
+                  loosePercentage
+                  exp
+                  nextLv
+                  sdId
+                }}
+              }}
+            }}
+          }}
+        '''
+
+        return gql(query)
