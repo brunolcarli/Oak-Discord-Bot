@@ -344,3 +344,25 @@ def get_gql_client(url, auth=None):
 
     client = Client(transport=transport, fetch_schema_from_transport=False)
     return client
+
+
+def get_badge_icon(badge_name):
+    """
+    Retorna a url da imagem contendo o ícone do tipo da insígnia designada.
+
+    param : badge_name : <str>
+
+    return : <str>
+    """
+
+    badges = {
+        'Fire': 'http://bit.ly/fire_badge_icon',
+        'Water': 'http://bit.ly/water_badge_icon',
+        'Grass': 'http://bit.ly/grass_badge_icon',
+        # TODO outras
+    }
+
+    return badges.get(
+        badge_name,
+        'https://img.icons8.com/carbon-copy/2x/question-mark.png'
+    )
