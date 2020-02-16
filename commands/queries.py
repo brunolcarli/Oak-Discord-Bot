@@ -71,11 +71,11 @@ class Query:
         return gql(query)
 
     @staticmethod
-    def get_trainers(**kwargs):
+    def get_trainers(id=None):
         """
         Retorna a query de treinadores
         """
-        filters = ' '.join([f'{k}:"{v}"' for k, v in kwargs.items()])
+        filters = '' if not id else f'(discordId_Icontains:"{id}")' 
         query = '''
         query {
             trainers %s {
@@ -87,10 +87,18 @@ class Query:
                         battleCounter
                         winPercentage
                         loosePercentage
+                        lv
+                        discordId
+                        fc
+                        sdId
+                        badgeCounter
+                        leaguesCounter
+                        exp
+                        nextLv
                     }
                 }
             }
         }
-        ''' % '' if not filters else f'({filters})'
+        ''' % filters
 
         return gql(query)
