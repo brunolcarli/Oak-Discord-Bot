@@ -95,3 +95,41 @@ class Mutations:
     }}
     '''
     return gql(mutation)
+
+  @staticmethod
+  def battle_registration(league_id, trainer_id, leader_id, winner):
+    mutation = f'''
+        mutation{{
+      battleRegister(input:{{
+        league:"{league_id}"
+        trainer: "{trainer_id}"
+        leader: "{leader_id}"
+        winner: "{winner}"
+      }}){{
+        battle{{
+          id
+          battleDatetime
+          winner
+        }}
+      }}
+    }}
+    '''
+    print(mutation)
+    return gql(mutation)
+
+  @staticmethod
+  def add_badge(discord_id, badge, league):
+    """
+    Requisição para Bill solicitando a adição de uma insígnia à um treinador
+    """
+    mutation = f'''mutation{{
+      addBadgeToTrainer(input:{{
+        discordId: "{discord_id}"
+        badge: "{badge}"
+        league: "{league}"
+      }}){{
+        response
+      }}
+    }}
+    '''
+    return gql(mutation)
