@@ -454,10 +454,8 @@ async def view_leagues(bot, league_id=None):
             reference = league.get('reference', '?')
             start_date = league.get('startDate', '?')
             end_date = league.get('endDate', '?')
-            league_description = league.get('description') or 'No description'
 
-            body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'\
-                f'`{league_description}`'
+            body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'
 
             embed.add_field(name=reference, value=body, inline=False)
 
@@ -1111,7 +1109,7 @@ async def update_trainer(bot, discord_id=None, *tokens):
 
 
 @client.command()  # TODO add aliases
-async def update_leader(bot, discord_id, *tokens):
+async def update_leader(bot, discord_id=None, *tokens):
     """
     TODO docstring
     """
@@ -1181,3 +1179,72 @@ async def update_leader(bot, discord_id, *tokens):
     description = f'{discord_id} seus dados foram atualizados!'
 
     return await bot.send(description, embed=embed)
+
+
+# TODO os parametrso string precisam ser "joineds", ou seja, formar sentenças
+# a partir dos tokens, pois se na descrição for fornecido "um lugar bonito"
+# será salvo somente "um". Talvez substituir *tokens por dois parametros explcitos
+# fazendo com que a função opera somente uma opção por vez.
+@client.command()  # TODO add aliases
+async def update_league(bot, league_id=None, *tokens):
+    """
+    TODO docstring
+    """
+
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+    if not is_adm:
+        return await bot.send('Você não tem permissão para fazer isso')
+
+    if not league_id:
+        title = 'Por favor marque forneça o ID da liga e os parâmetros!'
+        embed.add_field(
+            name='Exemplo',
+            value='`/update_league h4sHd4L1g4== inicio 15-03-2020`',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
+
+    pairs = zip(*(iter(tokens),)*2)
+    if not pairs:
+        # TODO return oak error
+        return await bot.send('Parâmetros ausentes')
+
+    valid_options = {
+        'n': 'name',
+        'ref': 'reference',
+        'inicio': 'start_date',
+        'fim': 'end_date',
+    }
+
+    inputs = {} 
+    for pair in pairs:
+        if pair[0].lower() in valid_options:
+            if pair[0] == 'inicio' or pair[0] == 'fim':
+                inputs[valid_options[pair[0].lower()]] = datetime.strftime(
+                    parser.parse(pair[1]), '%Y-%m-%d'
+                )
+            else:
+                inputs[valid_options[pair[0].lower()]] = pair[1]
+
+    payload = Mutations.update_league(league_id, **inputs)
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+        return await bot.send('Desculpe não pude realizar esta operação!')
+
+    reference = response['updateLeague']['league'].get('reference') or '?'
+    start_date = response['updateLeague']['league'].get('startDate') or '?'
+    end_date = response['updateLeague']['league'].get('endDate') or '?'
+
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+    embed.set_thumbnail(url="http://bit.ly/abp_logo")
+    embed.add_field(name='Referência', value=reference, inline=True)
+    embed.add_field(name='Início', value=start_date, inline=True)
+    embed.add_field(name='Fim', value=end_date, inline=True)
+
+    return await bot.send('Liga atualizada!', embed=embed)

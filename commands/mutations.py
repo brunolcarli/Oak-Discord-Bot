@@ -194,5 +194,33 @@ class Mutations:
       }}
     }}
     '''
-    print(mutation)
+    return gql(mutation)
+
+  @staticmethod
+  def update_league(id, **kwargs):
+    """
+    TODO docstring
+    """
+    start_date = kwargs.get('start_date', '')
+    start_date = f'startDate: "{start_date}"' if start_date else ''
+
+    end_date = kwargs.get('end_date', '')
+    end_date = f'endDate: "{end_date}"' if end_date else ''
+
+    mutation = f'''
+    mutation update_league{{
+      updateLeague(input:{{
+        id: "{id}"
+        reference: "{kwargs.get('reference', '')}"	
+        {start_date}
+        {end_date}
+      }}){{
+        league{{
+          reference
+          startDate
+          endDate
+        }}
+      }}
+    }}
+    '''
     return gql(mutation)
