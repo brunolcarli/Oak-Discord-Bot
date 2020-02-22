@@ -356,13 +356,24 @@ def get_badge_icon(badge_name):
     """
 
     badges = {
-        'Fire': 'http://bit.ly/fire_badge_icon',
-        'Water': 'http://bit.ly/water_badge_icon',
-        'Grass': 'http://bit.ly/grass_badge_icon',
-        # TODO outras
+        'Fire': ':_fire_:',
+        'Water': ':_water_:',
+        'Grass': ':_grass_:',
+        'Steel': ':_steel_:',
+        'Rock': ':_rock_:',
+        'Psychic': ':_psychic_:',
+        'Poison': ':_poison_:',
+        'Normal': ':_normal_:',
+        'Ice': ':_ice_:',
+        'Ground': ':_ground_:',
+        'Ghost': ':_ghost_:',
+        'Flying': ':_flying_:',
+        'Fighting': ':_fighting_:',
+        'Fairy': ':_fairy_:',
+        'Electric': ':_electric_:',
+        'Dragon': ':_dragon_:',
+        'Dark': ':_dark_:',
+        'Bug': ':_bug_:'
     }
 
-    return badges.get(
-        badge_name,
-        'https://img.icons8.com/carbon-copy/2x/question-mark.png'
-    )
+    return badges.get(badge_name)
