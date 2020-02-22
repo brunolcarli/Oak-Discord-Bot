@@ -7,6 +7,7 @@ facilitando a identificação e manutenção dos comandos.
 """
 
 # std libs
+from base64 import b64decode, b64encode
 from ast import literal_eval
 from sys import stdout
 from random import choice, randint
@@ -424,20 +425,16 @@ async def abp_db(ctx, *trainer_arg):
 @client.command()
 async def view_leagues(bot, league_id=None):
     """
-    Consulta as ligas cadastardas.
+    Consulta as ligas cadastradas.
 
     Para consultar uma lista de todas as ligas:
-    ```
+    
     /view_leagues
-    ```
 
     Para consultar dados de uma liga específica pode-se fornecer o id da liga:
-    ```
-    /view_leagues Ha5Hb4s364dAL1gA==
-    ```
 
+    /view_leagues liga1
     """
-
     # busca todas as ligas
     if not league_id:
         payload = Query.get_leagues()
@@ -450,19 +447,33 @@ async def view_leagues(bot, league_id=None):
         embed.set_thumbnail(url="http://bit.ly/abp_logo")
 
         for league in leagues:
-            league_id = league.get('id', '?')
+            league_hash_id = league.get('id', '?')
             reference = league.get('reference', '?')
             start_date = league.get('startDate', '?')
             end_date = league.get('endDate', '?')
 
-            body = f'ID: `{league_id}` | Data: de `{start_date}` a `{end_date}`\n'
+            # desfaz a hash da liga
+            _, league_id = b64decode(league_hash_id).decode('utf-8').split(':')
+
+            body = f'ID: `liga{league_id}` | Data: de `{start_date}` a `{end_date}`\n'
 
             embed.add_field(name=reference, value=body, inline=False)
 
         description = 'Ligas Pokémon ABP'
         return await bot.send(description, embed=embed)
 
-    payload = Query.get_leagues(id=league_id)
+    # faz a hash da liga
+    try:
+        _, int_id = league_id.lower().split('liga')
+    except Exception:
+        return await bot.send('ID inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID inválido!')  # TODO retornar Oak error
+
+    league_hash = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
+    payload = Query.get_leagues(id=league_hash)
     client = get_gql_client(BILL_API_URL)
     response = client.execute(payload)
 
@@ -471,9 +482,14 @@ async def view_leagues(bot, league_id=None):
         return #erro
 
     league = leagues[0]
+
+    # desfaz a hash da liga
+    league_hash_id = league['node'].get('id')
+    _, league_id = b64decode(league_hash_id).decode('utf-8').split(':')
+
     embed = discord.Embed(color=0x1E1E1E, type="rich")
     embed.set_thumbnail(url="http://bit.ly/abp_logo")
-    embed.add_field(name='ID', value=league['node'].get('id'), inline=True)
+    embed.add_field(name='ID', value=f'liga{league_id}', inline=True)
     embed.add_field(name='Referência', value=league['node'].get('reference'), inline=True)
     embed.add_field(name='Início', value=league['node'].get('startDate'), inline=True)
     embed.add_field(name='Fim', value=league['node'].get('endDate'), inline=True)
@@ -484,6 +500,7 @@ async def view_leagues(bot, league_id=None):
     )
 
     return await bot.send('Aqui', embed=embed)
+
 
 # TODO review
 @client.command()
@@ -639,12 +656,6 @@ async def view_leaders(bot, discord_id=None):
 
     return await bot.send(description, embed=embed)
 
-# @client.command()
-# async def foo(ctx, param=None, value=None):
-#     a_valid_intention = param and value
-#     if not a_valid_intention:
-#         return await ctx.send('Chamada inválida ao comando!')
-
 
 # TODO encapsulate the algorithm inside this func to a dedicated module
 @client.command()
@@ -766,8 +777,12 @@ async def new_league(bot, *reference):
 
     league = response['createLeague'].get('league')
 
+    # desfaz a hash da liga
+    league_hash_id = league.get('id')
+    _, league_id = b64decode(league_hash_id).decode('utf-8').split(':')
+
     description = 'Liga Registrada com sucesso!'
-    embed.add_field(name='ID:', value=league.get('id'), inline=True)
+    embed.add_field(name='ID:', value=f'liga{league_id}', inline=True)
     embed.add_field(name='Referência:', value=league.get('reference'), inline=True)
     return await bot.send(description, embed=embed)
 
@@ -858,12 +873,12 @@ async def league_register(bot, *args):
 
     Em caso de registro de treinador fornecer o parâmetro seguido do id discord:
     Ex:
-                -t @Username HashIdDaLiga==
+                -t @Username liga1
 
     Em caso de registro de líder deve-se fornecer também o tipo de pokemon e
     papel do líder, separados pelo caracter underscore (_)
     Ex:
-                -l @Username HashIdDaLiga==
+                -l @Username liga1
 
     """
 
@@ -897,6 +912,19 @@ async def league_register(bot, *args):
         return await bot.send(title, embed=embed)
 
     option, discord_id, league, *_ = args
+
+    # Tenta iniciar a sequência de fabricacnao da hash base64
+    try:
+        _, int_id = league.lower().split('liga')
+    except Exception:
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # faz a hash da liga
+    league = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
 
     options = {'-t': True, '-l': False}
     if not option in options.keys():
@@ -954,8 +982,21 @@ async def battle_register(bot, *args):
         return await bot.send(title, embed=embed)  # TODO retornar Oak param error
 
     league, trainer, leader, winner, *_ = args
-    payload = Mutations.battle_registration(league, trainer, leader, winner)
 
+    # Tenta iniciar a sequência de fabricacnao da hash base64
+    try:
+        _, int_id = league.lower().split('liga')
+    except Exception:
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # faz a hash da liga
+    league = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
+
+    payload = Mutations.battle_registration(league, trainer, leader, winner)
     client = get_gql_client(BILL_API_URL)
 
     try:
@@ -986,8 +1027,6 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
     """
     TODO docstring
     """
-    embed = discord.Embed(color=0x1E1E1E, type="rich")
-
     a_valid_intention = discord_id and badge and league
     is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
     is_gym_leader = 'GYM LEADER' in [r.name for r in bot.author.roles]
@@ -996,7 +1035,7 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
         return await bot.send('Você não tem permissão para fazer isso')
 
     if not a_valid_intention:
-        return await bot.send('Formato inválido!\nUso:\n`/add_badge @username dragon H4sHd4l1g4==`')
+        return await bot.send('Formato inválido!\nExemplo de uso:\n`/add_badge @username dragon liga1`')
 
     badges = set([
         'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice', 'Fighting',
@@ -1019,6 +1058,19 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
     if not valid_member:
         return await bot.send('Usuário inválido!')  # TODO retornar oak error
 
+    # Tenta iniciar a sequência de fabricacnao da hash base64
+    try:
+        _, int_id = league.lower().split('liga')
+    except Exception:
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # faz a hash da liga
+    league = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
+
     payload = Mutations.add_badge(discord_id, badge, league)
     client = get_gql_client(BILL_API_URL)
 
@@ -1035,10 +1087,10 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
 
     response = response['addBadgeToTrainer'].get('response')
     if 'received' in response and 'badge' in response:
-        text = f'{discord_id} recebeu a insígnia {badge}!'
-        embed.set_thumbnail(url=get_badge_icon(badge.title()))
+        emoji = get_badge_icon(badge.title())
+        text = f'{discord_id} recebeu a insígnia {emoji}!'
 
-        return await bot.send(text, embed=embed)
+        return await bot.send(text)
 
     return await bot.send('Desculpe! Não pude realizar esta operação')
 
@@ -1190,7 +1242,6 @@ async def update_league(bot, league_id=None, *tokens):
     """
     TODO docstring
     """
-
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
     is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
@@ -1201,10 +1252,23 @@ async def update_league(bot, league_id=None, *tokens):
         title = 'Por favor marque forneça o ID da liga e os parâmetros!'
         embed.add_field(
             name='Exemplo',
-            value='`/update_league h4sHd4L1g4== inicio 15-03-2020`',
+            value='`/update_league liga1 inicio 15-03-2020`',
             inline=False
         )
         return await bot.send(title, embed=embed)
+
+    # Tenta iniciar a sequência de fabricacnao da hash base64
+    try:
+        _, int_id = league_id.lower().split('liga')
+    except Exception:
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # faz a hash da liga
+    league_id = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
 
     pairs = zip(*(iter(tokens),)*2)
     if not pairs:
