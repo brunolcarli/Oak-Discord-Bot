@@ -114,7 +114,6 @@ class Mutations:
       }}
     }}
     '''
-    print(mutation)
     return gql(mutation)
 
   @staticmethod
