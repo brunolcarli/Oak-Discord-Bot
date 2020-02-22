@@ -1233,7 +1233,7 @@ async def update_leader(bot, discord_id=None, *tokens):
     return await bot.send(description, embed=embed)
 
 
-# TODO os parametrso string precisam ser "joineds", ou seja, formar sentenças
+# TODO os parametros string precisam ser "joineds", ou seja, formar sentenças
 # a partir dos tokens, pois se na descrição for fornecido "um lugar bonito"
 # será salvo somente "um". Talvez substituir *tokens por dois parametros explcitos
 # fazendo com que a função opera somente uma opção por vez.
@@ -1312,3 +1312,51 @@ async def update_league(bot, league_id=None, *tokens):
     embed.add_field(name='Fim', value=end_date, inline=True)
 
     return await bot.send('Liga atualizada!', embed=embed)
+
+
+@client.command()
+async def scores(bot, league_id=None):
+    """
+    TODO docstring
+    """
+    if not league_id:
+        return await bot.send(
+            'É preciso informar o id de uma liga!\nEx:\n`/scores liga1`'
+        )  # TODO retornar Oak error
+
+    embed = discord.Embed(color=0x1E1E1E, type="rich")
+    embed.set_thumbnail(url="http://bit.ly/abp_logo")
+
+    # faz a hash da liga
+    try:
+        _, int_id = league_id.lower().split('liga')
+    except Exception:
+        return await bot.send('ID inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID inválido!')  # TODO retornar Oak error
+
+    league_hash = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
+
+    payload = Query.get_scores(league_id=league_hash)
+    client = get_gql_client(BILL_API_URL)
+    response = client.execute(payload)
+
+    scores = response['scores']['edges']
+    if not scores:
+        return await bot.send('Não há scores nesta liga ainda!')  # TODO retornar Oak error
+
+    for score in scores:
+        trainer = score['node']['trainer'].get('discordId', '?')
+        lv = score['node']['trainer'].get('lv', '?')
+        wins = score['node'].get('wins', '?')
+        losses = score['node'].get('losses', '?')
+        badges = score['node'].get('badges', '?')
+
+        body = f'{trainer} | **Lv**: `{lv}` | **Vitórias**: `{wins}` | '\
+               f'**Derrotas**: `{losses}` | **Insígnias**: `{len(badges)}`'
+
+        embed.add_field(name='Treinador', value=body, inline=False)
+
+    return await bot.send('Scores', embed=embed)

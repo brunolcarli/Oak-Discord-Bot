@@ -106,7 +106,7 @@ class Query:
     @staticmethod
     def get_leaders(id=None):
         """
-        Requisição solictando a consulta de líderes registrados
+        Requisição solicitando a consulta de líderes registrados
         """
         filters = '' if not id else f'(discordId_Icontains:"{id}")'
         query = f'''
@@ -134,4 +134,28 @@ class Query:
           }}
         '''
 
+        return gql(query)
+
+    @staticmethod
+    def get_scores(league_id):
+        """
+        Requisição solicitando a consulta do score dos treinadores de uma liga
+        """
+        query = f'''
+        query{{
+          scores(league_Id_In: "{league_id}"){{
+            edges{{
+            node{{
+                trainer{{
+                  discordId
+                  lv
+                }}
+                wins
+                losses
+                badges
+              }}
+            }}
+          }}
+        }}
+        '''
         return gql(query)
