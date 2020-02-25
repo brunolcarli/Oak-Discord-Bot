@@ -41,7 +41,7 @@ from util.general_tools import (get_similar_pokemon, get_trainer_rank,
                                 find_db_trainer, get_discord_member,
                                 get_value_or_default,
                                 get_initial_ranked_table, find_trainer,
-                                get_gql_client, get_badge_icon)
+                                get_gql_client, get_badge_icon, get_emoji)
 
 # requests tools
 from util.get_api_data import (dex_information, get_pokemon_data,
@@ -1149,6 +1149,7 @@ async def update_trainer(bot, discord_id=None, *tokens):
         response = client.execute(payload)
     except Exception as err:
         stdout.write(f'Erro: {str(err)}\n\n')
+        return # TODO retornar Oak error
 
     name = response['updateTrainer']['trainer'].get('name')
     fc = response['updateTrainer']['trainer'].get('fc')
@@ -1168,7 +1169,6 @@ async def update_leader(bot, discord_id=None, *tokens):
     """
     TODO docstring
     """
-
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
     # Somente pode-se atualizar os proprios dados
@@ -1363,3 +1363,91 @@ async def scores(bot, league_id=None):
         embed.add_field(name='Treinador', value=body, inline=False)
 
     return await bot.send('Scores', embed=embed)
+
+
+@client.command(aliases=['tscore', 'ts'])
+async def trainer_score(bot, discord_id=None, league=None):
+    """
+    Informa o placar de um jogador em uma liga
+
+    Exemplo de uso:
+       /ts @username liga1
+    """
+    a_valid_intention = discord_id and league
+    if not a_valid_intention:
+        # TODO retornar oak error
+        return await bot.send('Necessário marcar o treinador e informar a liga')
+
+    # Verifica que o discord_id fornecido é um usuário do servidor
+    guild_member = next(
+        iter(
+            [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
+            ),
+        None  # default
+    )
+    if not guild_member:
+        return await bot.send('Treinador inválido!')  # TODO Retornar Oak Error
+
+    # Tenta iniciar a sequência de fabricacnao da hash base64
+    try:
+        _, int_id = league.lower().split('liga')
+    except Exception:
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
+
+    # faz a hash da liga
+    league_id = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')    
+
+    payload = Query.get_trainer_score(discord_id, league_id)
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+        return # TODO retornar Oak error
+
+    '''
+    {'scores': {'edges': [{'node': {'trainer': {'discordId': '@†BeelzeBruno†', 'lv': 10}, 'wins': 1, 'losses': 11, 'badges': ['Fire', 'Water', 'Grass', 'Fighting', 'Flying', 'Psychic', 'Bug', 'Dark', 'Dragon'], 'battles': {'edges': [{'node': {'battleDatetime': '2020-02-15T23:58:27.428707+00:00', 'winner': '@†BeelzeBruno†', 'leader': {'discordId': '@Lisa'}}}]}}}]}}
+    '''
+    score_list = response['scores']['edges']
+
+    if not score_list:
+        return await bot.send('Nenhum score encontrado para esta combinação')
+
+    score = next(iter(score_list)).get('node')
+
+    # stats basicos
+    trainer_lv = score['trainer'].get('lv')
+    wins = score.get('wins')
+    loses = score.get('losses')
+    stats = f'**Lv**: `{trainer_lv}` | **Vitórias**: `{wins}` | '\
+            f'**Derrotas**: `{loses}`'
+
+    # insignas conquistdas 
+    badge_list = [get_badge_icon(badge) for badge in score.get('badges')]
+    badges = ' '.join(get_emoji(bot, name) for name in badge_list)
+
+    # última batalha do treinador
+    have_battles = score['battles'].get('edges')
+    if not have_battles:
+        last_battle = 'Este treinador ainda não possui batalhas!'
+    else:
+        battle = next(iter(have_battles)).get('node')
+        battle_datetime = parser.parse(battle.get('battleDatetime')).strftime('%d/%m/%Y')
+        leader = battle['leader'].get('discordId')
+        winner = battle.get('winner')
+        last_battle = f'**Data**: `{battle_datetime}` | **Vs**: {leader} | '\
+                      f'**Vencedor**: {winner}'
+
+    embed = discord.Embed(color=0x1E1E1E, type='rich')
+    embed.set_thumbnail(url=guild_member.avatar_url._url)
+    embed.add_field(name='Stats', value=stats, inline=False)
+    embed.add_field(name='Insígnias', value=badges, inline=False)
+    embed.add_field(name='Última Batalha', value=last_battle, inline=False)
+
+    msg = f'Placar de {discord_id} na {league}:'
+    return await bot.send(msg, embed=embed)

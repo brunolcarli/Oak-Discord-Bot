@@ -159,3 +159,41 @@ class Query:
         }}
         '''
         return gql(query)
+
+    @staticmethod
+    def get_trainer_score(discord_id, league_id):
+        """
+        Solicita o score de um treinador específico em uma liga
+        """
+        query = f"""
+        query scores{{
+          scores(
+              trainer_DiscordId:  "{discord_id}"
+              league_Id_In: "{league_id}"
+          ){{
+            edges{{
+              node{{
+                trainer{{
+                  discordId
+                  lv
+                }}
+                wins
+                losses
+                badges
+                battles(last: 1){{
+                  edges{{
+                    node{{
+                      battleDatetime
+                      winner
+                      leader{{
+                        discordId
+                      }}
+                    }}
+                  }}
+                }}
+              }}
+            }}
+          }}
+        }}
+        """
+        return gql(query)

@@ -377,3 +377,14 @@ def get_badge_icon(badge_name):
     }
 
     return badges.get(badge_name)
+
+
+def get_emoji(bot, emoji_name):
+    """
+    retorna um emoji no do server pelo nome no formato que o bot precisa
+    para entregar o emoji na mensagem.
+    """
+    emoji_badge = ''.join(
+        f'<:{e.name}:{e.id}>' for e in bot.guild.emojis if e.name == emoji_name
+    )
+    return emoji_badge
