@@ -31,22 +31,19 @@ from util.showdown_battle import load_battle_replay
 from util.elos import get_elo, get_elo_name, validate_elo_battle, ELOS_MAP
 
 # TODO talvez muitas destas funções pudessem ser encapsuladas em uma classe
-from util.general_tools import (get_similar_pokemon, get_trainer_rank,
+from util.general_tools import (get_trainer_rank, get_emoji,
                                 get_ranked_spreadsheet, get_form_spreadsheet,
-                                get_trainer_database_spreadsheet, 
+                                get_trainer_database_spreadsheet,
                                 get_trainer_db_table, get_random_profile,
                                 compare_insensitive, get_embed_output,
                                 get_table_output, get_trainer_rank_row,
-                                get_initial_ranked_table, find_trainer, 
-                                find_db_trainer, get_discord_member,
-                                get_value_or_default,
                                 get_initial_ranked_table, find_trainer,
-                                get_gql_client, get_badge_icon, get_emoji)
+                                find_db_trainer, get_discord_member,
+                                get_value_or_default, get_gql_client,
+                                get_badge_icon)
 
 # requests tools
-from util.get_api_data import (dex_information, get_pokemon_data,
-                               get_item_data, item_information,
-                               get_ability_data, ability_information)
+from util.get_api_data import (dex_information, get_pokemon_data)
 from util.oak_errors import CommandErrors
 from commands.queries import Query
 from commands.mutations import Mutations
@@ -322,7 +319,7 @@ async def abp_db(ctx, *trainer_arg):
         # lookup for the trainer as discord member
         nick = "**__" + trainer[0] + "__**"
         trainer_discord = get_discord_member(client, trainer[1])
-        
+
         rnd_profile = get_random_profile()
         color = (trainer_discord.color) if trainer_discord is not None else rnd_profile[0]
         avatar = (trainer_discord.avatar_url) if trainer_discord is not None else rnd_profile[1]
@@ -330,7 +327,7 @@ async def abp_db(ctx, *trainer_arg):
         # setup embed data
         embed = discord.Embed(color=color, type="rich")
         embed.set_thumbnail(url=avatar)
-        
+
         embed.add_field(name="Discord", value=get_value_or_default(trainer, 1), inline=False)
         embed.add_field(name="Switch FC", value=get_value_or_default(trainer, 2), inline=False)
         embed.add_field(name="Showdown", value=get_value_or_default(trainer, 3), inline=False)
@@ -360,7 +357,7 @@ async def abp_db(ctx, *trainer_arg):
 
         for _, trainer in enumerate(table[1:max_data+1], start=1):
             title = "{0} - {1}".format(trainer[0], get_value_or_default(trainer, 1, "n/a"))
-            details = "FC: `{0}` | SD: `{1}`".format(get_value_or_default(trainer, 2), 
+            details = "FC: `{0}` | SD: `{1}`".format(get_value_or_default(trainer, 2),
                                                      get_value_or_default(trainer, 3))
 
             embed.add_field(name=title, value=details, inline=False)
@@ -380,7 +377,7 @@ async def view_leagues(bot, league_id=None):
     Consulta as ligas cadastradas.
 
     Para consultar uma lista de todas as ligas:
-    
+
     /view_leagues
 
     Para consultar dados de uma liga específica pode-se fornecer o id da liga:
@@ -396,7 +393,7 @@ async def view_leagues(bot, league_id=None):
         payload = Query.get_leagues()
         client = get_gql_client(BILL_API_URL)
         response = client.execute(payload)
-        
+
         leagues = [edge.get('node') for edge in response['leagues'].get('edges')]
 
         embed = discord.Embed(color=0x1E1E1E, type="rich")
@@ -694,7 +691,7 @@ async def new_trainer(bot, discord_id=None):
 
         is_unique = literal_eval(err.args[0]).get('message').startswith('UNIQUE')
         if is_unique:
-            return await bot.send('Este treinador já está registrado!')            
+            return await bot.send('Este treinador já está registrado!')
         return await bot.send(
             'Sinto muito. Não pude processar esta operação.\n'\
             'Por favor, tente novamente mais tarde'
@@ -765,7 +762,7 @@ async def new_league(bot, *reference):
 
         is_unique = literal_eval(err.args[0]).get('message').startswith('UNIQUE')
         if is_unique:
-            return await bot.send('Esta liga já está registrada!')            
+            return await bot.send('Esta liga já está registrada!')
         return await bot.send(
             'Sinto muito. Não pude processar esta operação.\n'\
             'Por favor, tente novamente mais tarde'
@@ -835,10 +832,23 @@ async def new_leader(bot, *args):
         return await bot.send(title, embed=embed)
 
     if len(args) is not 3:
-        title = 'Preciso que me informe **três** parâmetros **exatamente** nesta ordem!'
-        embed.add_field(name='Exemplo 1', value='`/new_leader @fulano fire gym_leader`', inline=False)
-        embed.add_field(name='Exemplo 2', value='`/new_leader @ciclano fairy elite_four`', inline=False)
-        embed.add_field(name='Exemplo 3', value='`/new_leader @fulano grass champion`', inline=False)
+        title = 'Preciso que me informe **três** parâmetros '\
+                '**exatamente** nesta ordem!'
+        embed.add_field(
+            name='Exemplo 1',
+            value='`/new_leader @fulano fire gym_leader`',
+            inline=False
+        )
+        embed.add_field(
+            name='Exemplo 2',
+            value='`/new_leader @ciclano fairy elite_four`',
+            inline=False
+        )
+        embed.add_field(
+            name='Exemplo 3',
+            value='`/new_leader @fulano grass champion`',
+            inline=False
+        )
         return await bot.send(title, embed=embed)
 
     discord_id, poke_type, role = args
@@ -846,7 +856,7 @@ async def new_leader(bot, *args):
     guild_member = next(
         iter(
             [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
-            ),
+        ),
         None  # default
     )
     if not guild_member:
@@ -858,7 +868,7 @@ async def new_leader(bot, *args):
         role.upper()
     )
     client = get_gql_client(BILL_API_URL)
-    
+
     try:
         response = client.execute(payload)
     except Exception as err:
@@ -866,7 +876,7 @@ async def new_leader(bot, *args):
 
         is_unique = literal_eval(err.args[0]).get('message').startswith('UNIQUE')
         if is_unique:
-            return await bot.send('Este líder já está registrado!')            
+            return await bot.send('Este líder já está registrado!')
         return await bot.send(
             'Sinto muito. Não pude processar esta operação.\n'\
             'Por favor, tente novamente mais tarde'
@@ -1055,7 +1065,7 @@ async def battle_register(bot, *args):
     )
     embed.set_thumbnail(url=winner.avatar_url._url)
     embed.add_field(name='Data da batalha:', value=battle_date, inline=False)
-    embed.add_field(name='Vancedor:', value=winner.name, inline=False)    
+    embed.add_field(name='Vancedor:', value=winner.name, inline=False)
     # TODO mostrar quem X quem
 
     return await bot.send('Batalha registrada!', embed=embed)
@@ -1104,7 +1114,10 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
     # TODO Adicionar verificação que valida se o gym leader é do tipo da insígnia
 
     if not a_valid_intention:
-        return await bot.send('Formato inválido!\nExemplo de uso:\n`/add_badge @username dragon liga1`')
+        return await bot.send(
+            'Formato inválido!\nExemplo de uso:'\
+            '\n`/add_badge @username dragon liga1`'
+        )
 
     badges = set([
         'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice', 'Fighting',
@@ -1219,7 +1232,7 @@ async def update_trainer(bot, discord_id=None, *tokens):
         'sd': 'sd_id'
     }
 
-    inputs = {} 
+    inputs = {}
     for pair in pairs:
         if pair[0].lower() in valid_options:
             inputs[valid_options[pair[0].lower()]] = pair[1]
@@ -1302,7 +1315,7 @@ async def update_leader(bot, discord_id=None, *tokens):
         'type': 'poke_type'
     }
 
-    inputs = {} 
+    inputs = {}
     for pair in pairs:
         if pair[0].lower() in valid_options:
             inputs[valid_options[pair[0].lower()]] = pair[1]
@@ -1396,7 +1409,7 @@ async def update_league(bot, league_id=None, *tokens):
         'fim': 'end_date',
     }
 
-    inputs = {} 
+    inputs = {}
     for pair in pairs:
         if pair[0].lower() in valid_options:
             if pair[0] == 'inicio' or pair[0] == 'fim':
@@ -1524,7 +1537,7 @@ async def trainer_score(bot, discord_id=None, league=None):
         return await bot.send('ID de liga inválido!')  # TODO retornar Oak error
 
     # faz a hash da liga
-    league_id = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')    
+    league_id = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
 
     payload = Query.get_trainer_score(discord_id, league_id)
     client = get_gql_client(BILL_API_URL)
@@ -1535,9 +1548,6 @@ async def trainer_score(bot, discord_id=None, league=None):
         stdout.write(f'Erro: {str(err)}\n\n')
         return # TODO retornar Oak error
 
-    '''
-    {'scores': {'edges': [{'node': {'trainer': {'discordId': '@†BeelzeBruno†', 'lv': 10}, 'wins': 1, 'losses': 11, 'badges': ['Fire', 'Water', 'Grass', 'Fighting', 'Flying', 'Psychic', 'Bug', 'Dark', 'Dragon'], 'battles': {'edges': [{'node': {'battleDatetime': '2020-02-15T23:58:27.428707+00:00', 'winner': '@†BeelzeBruno†', 'leader': {'discordId': '@Lisa'}}}]}}}]}}
-    '''
     score_list = response['scores']['edges']
 
     if not score_list:
@@ -1552,7 +1562,7 @@ async def trainer_score(bot, discord_id=None, league=None):
     stats = f'**Lv**: `{trainer_lv}` | **Vitórias**: `{wins}` | '\
             f'**Derrotas**: `{loses}`'
 
-    # insignas conquistdas 
+    # insignas conquistadas
     badge_list = [get_badge_icon(badge) for badge in score.get('badges')]
     badges = ' '.join(get_emoji(bot, name) for name in badge_list)
 
