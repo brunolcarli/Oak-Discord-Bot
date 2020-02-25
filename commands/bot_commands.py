@@ -181,6 +181,10 @@ async def random_pokemon(ctx):
     await ctx.send(response)
 
 
+##########################################
+# Comandos Ranked
+##########################################
+
 @client.command(aliases=['top', 'rt', 'ranked_top'])
 async def top_ranked(ctx, *args):
     """
@@ -422,7 +426,7 @@ async def abp_db(ctx, *trainer_arg):
 ##########################################
 
 # TODO Retornar erro ao nao enviar um id valido
-@client.command()
+@client.command(aliases=['ligas', 'liga'])
 async def view_leagues(bot, league_id=None):
     """
     Consulta as ligas cadastradas.
@@ -434,6 +438,10 @@ async def view_leagues(bot, league_id=None):
     Para consultar dados de uma liga específica pode-se fornecer o id da liga:
 
     /view_leagues liga1
+
+    Aliases:
+        ligas
+        liga
     """
     # busca todas as ligas
     if not league_id:
@@ -503,8 +511,22 @@ async def view_leagues(bot, league_id=None):
 
 
 # TODO review
-@client.command()
+@client.command(aliases=['vt', 't', 'trainers'])
 async def view_trainers(bot, discord_id=None):
+    """
+    Visualiza dados de treiandores cadastrados
+
+    Exemplo de uso, ver listagem de treinadores:
+        /view_trainers
+
+    Exemplo de uso, ver dados de um treinador:
+        /view_trainers @Username
+
+    Alaises:
+        vt
+        t
+        trainers
+    """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
     if not discord_id:
@@ -579,10 +601,23 @@ async def view_trainers(bot, discord_id=None):
     return await bot.send(description, embed=embed)
 
 
-@client.command()
+@client.command(aliases=['vl', 'leaders', 'lideres', 'lider', 'leader'])
 async def view_leaders(bot, discord_id=None):
     """
-    TODO docstring
+    Visualiza dados de líderes
+
+    Exemplo de uso, ver lista de líderes:
+        /view_leaders
+
+    Exemplo de uso, ver dados de um líder:
+        /view_leaders @Username
+
+    Aliases:
+        vl
+        leaders
+        lideres
+        lider
+        leader
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -658,10 +693,16 @@ async def view_leaders(bot, discord_id=None):
 
 
 # TODO encapsulate the algorithm inside this func to a dedicated module
-@client.command()
+@client.command(aliases=['nt'])
 async def new_trainer(bot, discord_id=None):
     """
     Solicita a criação de um novo treinador ao banco de dados.
+
+    Exemplo de uso:
+        /nt @Username
+
+    Aliases:
+        nt
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -732,10 +773,17 @@ async def new_trainer(bot, discord_id=None):
     await bot.send(description, embed=embed)
 
 
-@client.command()
+@client.command(aliases=['nliga', 'cliga'])
 async def new_league(bot, *reference):
     """
     Envia uma requisição solicitando a criação de uma nova liga.
+
+    Exemplo de uso:
+        /new_league Liga 2089 Pokemon Galaxy & Universe
+
+    Aliases:
+        nliga
+        cliga
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -787,10 +835,42 @@ async def new_league(bot, *reference):
     return await bot.send(description, embed=embed)
 
 
-@client.command()
+@client.command(aliases=['nl'])
 async def new_leader(bot, *args):
     """
     Envia uma requisição solicitando a criação de um novo líder.
+
+    Exemplo de uso:
+        /new_leader @Username fire elite_four
+
+    Cargos aceitos:
+        gym_leader
+        elite_four
+        champion
+
+    Tipos aceitos:
+        Normal
+        Fire
+        Water
+        Grass
+        Electric
+        Ice
+        Fighting
+        Poison
+        Ground
+        Flying
+        Psychic
+        Bug
+        Rock
+        Ghost
+        Dark
+        Dragon
+        Steel
+        Fairy
+        All
+
+    Aliases:
+        nl
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -861,7 +941,7 @@ async def new_leader(bot, *args):
 
 
 # TODO review
-@client.command()
+@client.command(aliases=['lr', 'registro_liga', 'rl'])
 async def league_register(bot, *args):
     """
     Solicita a API a inscrição de um jogador em uma liga pokemon.
@@ -875,11 +955,14 @@ async def league_register(bot, *args):
     Ex:
                 -t @Username liga1
 
-    Em caso de registro de líder deve-se fornecer também o tipo de pokemon e
-    papel do líder, separados pelo caracter underscore (_)
+    Em caso de registro de líder:
     Ex:
                 -l @Username liga1
 
+    Aliases:
+        registro_liga
+        rl
+        lr
     """
 
     embed = discord.Embed(color=0x1E1E1E, type="rich")
@@ -957,11 +1040,19 @@ async def league_register(bot, *args):
 
 
 # TODO review
-@client.command()  # TODO add aliases
+@client.command(aliases=['br', 'new_battle', 'battle', 'rb'])
 async def battle_register(bot, *args):
     """
-    TODO docstring
-    /battle_register ID_liga @trainer @leader @winner
+    Registra uma batalha entre um treinador e um líder
+
+    Exemplo de uso:
+        /battle_register liga1 @trainer @leader @winner
+
+    Aliases:
+        new_battle
+        battle
+        br
+        rb
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -1022,10 +1113,38 @@ async def battle_register(bot, *args):
     return await bot.send('Batalha registrada!', embed=embed)
 
 
-@client.command()  #TODO add aliases
+@client.command(aliases=['ab', 'add', 'addb'])
 async def add_badge(bot, discord_id=None, badge=None, league=None):
     """
-    TODO docstring
+    Adiciona uma insígnia à um treinador
+
+    Exemplo de uso:
+        /add_badge @Username fire liga1
+
+    Insígnias aceitas:
+        Normal
+        Fire
+        Water
+        Grass
+        Electric
+        Ice
+        Fighting
+        Poison
+        Ground
+        Flying
+        Psychic
+        Bug
+        Rock
+        Ghost
+        Dark
+        Dragon
+        Steel
+        Fairy
+
+    Aliases:
+        add
+        addb
+        ab
     """
     a_valid_intention = discord_id and badge and league
     is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
@@ -1033,6 +1152,8 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
 
     if not is_adm and not is_gym_leader:
         return await bot.send('Você não tem permissão para fazer isso')
+
+    # TODO Adicionar verificação que valida se o gym leader é do tipo da insígnia
 
     if not a_valid_intention:
         return await bot.send('Formato inválido!\nExemplo de uso:\n`/add_badge @username dragon liga1`')
@@ -1098,10 +1219,23 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
     return await bot.send('Desculpe! Não pude realizar esta operação')
 
 
-@client.command()  #TODO add aliases
+@client.command(aliases=['trainer_update', 'tupdate', 'tu'])
 async def update_trainer(bot, discord_id=None, *tokens):
     """
-    TODO doscstring
+    Atualiza dados de um treinador
+
+    Exemplo de uso:
+        /update_trainer @Username n Red
+
+    Campos atualizáveis:
+        n    :> Nome do Treinador
+        fc   :> FC (Friend Code) do treinador
+        sd   :> ID Showdown do treinador
+
+    Aliases:
+        trainer_update
+        tupdate
+        tu
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -1164,10 +1298,25 @@ async def update_trainer(bot, discord_id=None, *tokens):
     return await bot.send(description, embed=embed)
 
 
-@client.command()  # TODO add aliases
+@client.command(aliases=['leader_update', 'lu', 'lupdate'])
 async def update_leader(bot, discord_id=None, *tokens):
     """
-    TODO docstring
+    Atualiza dados de um líder
+
+    Exemplo de uso:
+        /update_leader @username fc 1234567890
+
+    Campos atualizaveis:
+        n     :> Nome do líder
+        fc    :> FC (Friend Code) do líder
+        sd    :> ID Showdown do líder
+        role  :> Cargo (gym_leader, elite_four, chmpion)
+        type  :> Tipo pokémon (fire, grass, dragon ... all)
+
+    Aliases:
+        leader_update
+        lu
+        lupdate
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -1186,7 +1335,7 @@ async def update_leader(bot, discord_id=None, *tokens):
     guild_member = next(
         iter(
             [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
-            ),
+        ),
         None  # default
     )
     if not guild_member:
@@ -1240,10 +1389,24 @@ async def update_leader(bot, discord_id=None, *tokens):
 # a partir dos tokens, pois se na descrição for fornecido "um lugar bonito"
 # será salvo somente "um". Talvez substituir *tokens por dois parametros explcitos
 # fazendo com que a função opera somente uma opção por vez.
-@client.command()  # TODO add aliases
+@client.command(aliases=['atualiza_liga', 'al', 'ul'])
 async def update_league(bot, league_id=None, *tokens):
     """
-    TODO docstring
+    Atualiza dados de uma liga
+
+    Exemplo de uso:
+        /update_league liga1 inicio 15-03-2020
+
+    Campos atualizaveis:
+        inicio :> Data de iníncio da liga
+        fim    :> Data de encerramento da liga
+        n      :> Nome da liga
+        ref    :> Referencia da liga
+
+    Aliases:
+        atualiza_liga
+        al
+        ul
     """
     embed = discord.Embed(color=0x1E1E1E, type="rich")
 
@@ -1317,10 +1480,19 @@ async def update_league(bot, league_id=None, *tokens):
     return await bot.send('Liga atualizada!', embed=embed)
 
 
-@client.command()
+@client.command(aliases=['sc', 'lscores', 'resumo_placar', 'rp'])
 async def scores(bot, league_id=None):
     """
-    TODO docstring
+    Consulta o resumo dos scores de uma liga
+
+    Exmplo de uso:
+        /scores liga1
+
+    Aliases:
+        sc
+        lscores
+        resumo_placar
+        rp
     """
     if not league_id:
         return await bot.send(
@@ -1365,13 +1537,18 @@ async def scores(bot, league_id=None):
     return await bot.send('Scores', embed=embed)
 
 
-@client.command(aliases=['tscore', 'ts'])
+@client.command(aliases=['tscore', 'ts', 'placar'])
 async def trainer_score(bot, discord_id=None, league=None):
     """
     Informa o placar de um jogador em uma liga
 
     Exemplo de uso:
        /ts @username liga1
+
+    Aliases:
+        tscore
+        ts
+        placar
     """
     a_valid_intention = discord_id and league
     if not a_valid_intention:
