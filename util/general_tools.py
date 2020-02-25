@@ -356,24 +356,24 @@ def get_badge_icon(badge_name):
     """
 
     badges = {
-        'Fire': ':_fire_:',
-        'Water': ':_water_:',
-        'Grass': ':_grass_:',
-        'Steel': ':_steel_:',
-        'Rock': ':_rock_:',
-        'Psychic': ':_psychic_:',
-        'Poison': ':_poison_:',
-        'Normal': ':_normal_:',
-        'Ice': ':_ice_:',
-        'Ground': ':_ground_:',
-        'Ghost': ':_ghost_:',
-        'Flying': ':_flying_:',
-        'Fighting': ':_fighting_:',
-        'Fairy': ':_fairy_:',
-        'Electric': ':_electric_:',
-        'Dragon': ':_dragon_:',
-        'Dark': ':_dark_:',
-        'Bug': ':_bug_:'
+        'Fire': 'badge_fire',
+        'Water': 'badge_water',
+        'Grass': 'badge_grass',
+        'Steel': 'badge_steel',
+        'Rock': 'badge_rock',
+        'Psychic': 'badge_psychic',
+        'Poison': 'badge_poison',
+        'Normal': 'badge_normal',
+        'Ice': 'badge_ice',
+        'Ground': 'badge_ground',
+        'Ghost': 'badge_ghost',
+        'Flying': 'badge_flying',
+        'Fighting': 'badge_fighting',
+        'Fairy': 'badge_fairy',
+        'Electric': 'badge_electric',
+        'Dragon': 'badge_dragon',
+        'Dark': 'badge_dark',
+        'Bug': 'badge_bug'
     }
 
     return badges.get(badge_name)

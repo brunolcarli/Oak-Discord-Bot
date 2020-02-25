@@ -1087,8 +1087,11 @@ async def add_badge(bot, discord_id=None, badge=None, league=None):
 
     response = response['addBadgeToTrainer'].get('response')
     if 'received' in response and 'badge' in response:
-        emoji = get_badge_icon(badge.title())
-        text = f'{discord_id} recebeu a insígnia {emoji}!'
+        emoji_name = get_badge_icon(badge.title())
+        emoji_badge = ''.join(
+            '<:{}:{}>'.format(e.name, e.id) for e in bot.guild.emojis if e.name == emoji_name
+        )
+        text = f'{discord_id} recebeu a insígnia {emoji_badge} !'
 
         return await bot.send(text)
 
