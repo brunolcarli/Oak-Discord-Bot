@@ -63,64 +63,12 @@ async def on_ready():
     print("The bot is ready!")
 
 
-@client.event
-async def on_member_join(member):
-    # TODO I think this should be removed, since is is unused, or, adapt to
-    # send an welcome text on member join ...
-    # maybe thats the real reason for this piece of code to exist ¯\(°_o)/¯
-    print('{} entrou no rolê!'.format(member))
-
-
-@client.event
-async def on_member_remove(member):
-    # TODO I think this should be removed, since is is unused, or, adapt to
-    # send an welcome text on member join ...
-    # maybe thats the real reason for this piece of code to exist ¯\(°_o)/¯
-    print('{} saiu do rolê!'.format(member))
-
-
 @client.command()
 async def ping(ctx):
     """
     Verifica se o bot está executando. Responde com "pong" caso positivo.
     """
     await ctx.send('pong')
-
-
-@client.command()
-async def dex(ctx, pokemon):
-    """
-    Responde informações sobre um pokemon.
-    """
-    poke = get_pokemon_data(pokemon.lower())
-    response = dex_information(poke)
-    if not response:
-        response = 'Pokémon não registrado na PokeDex.\n'
-        response += 'Talvez você queira dizer: {}'.format(
-            get_similar_pokemon(pokemon)
-        )
-
-    await ctx.send(response)
-
-
-@client.command()
-async def item(ctx, item):
-    """
-    Responde informações sobre um item.
-    """
-    data = get_item_data(item.lower())
-    response = item_information(data)
-    await ctx.send(response)
-
-
-@client.command()
-async def ability(ctx, ability):
-    """
-    Responde informações sobre uma habilidade
-    """
-    data = get_ability_data(ability.lower())
-    response = ability_information(data)
-    await ctx.send(response)
 
 
 @client.command()
