@@ -1052,6 +1052,13 @@ async def battle_register(bot, *args):
         response = client.execute(payload)
     except Exception as err:
         stdout.write(f'Erro: {str(err)}\n\n')
+
+        err_message = literal_eval(err.args[0]).get('message')
+        if 'trainer is in standby' in err_message:
+            return await bot.send(
+                'Este treinador está de molho e não pode batalhar!'
+            )
+
         return await bot.send('Desculpe! Não pude realizar esta operação')
 
     # TODO tratar possíveis erros
@@ -1489,9 +1496,12 @@ async def scores(bot, league_id=None):
         wins = score['node'].get('wins', '?')
         losses = score['node'].get('losses', '?')
         badges = score['node'].get('badges', '?')
+        standby = score['node'].get('standby')
+        standby = ':exclamation:' if standby else ':white_check_mark:'
 
-        body = f'{trainer} | **Lv**: `{lv}` | **Vitórias**: `{wins}` | '\
-               f'**Derrotas**: `{losses}` | **Insígnias**: `{len(badges)}`'
+        body = f'{trainer} | **Lv**: `{lv}` | **Win**: `{wins}` | '\
+               f'**Lose**: `{losses}` | **Insígnias**: `{len(badges)}` | '\
+               f'**Molho**: {standby}'
 
         embed.add_field(name='Treinador', value=body, inline=False)
 
@@ -1520,7 +1530,7 @@ async def trainer_score(bot, discord_id=None, league=None):
     guild_member = next(
         iter(
             [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
-            ),
+        ),
         None  # default
     )
     if not guild_member:
@@ -1559,8 +1569,10 @@ async def trainer_score(bot, discord_id=None, league=None):
     trainer_lv = score['trainer'].get('lv')
     wins = score.get('wins')
     loses = score.get('losses')
+    standby = score.get('standby')
+    standby = ':exclamation:' if standby else ':white_check_mark:'
     stats = f'**Lv**: `{trainer_lv}` | **Vitórias**: `{wins}` | '\
-            f'**Derrotas**: `{loses}`'
+            f'**Derrotas**: `{loses}` | **Molho**: {standby}'
 
     # insignas conquistadas
     badge_list = [get_badge_icon(badge) for badge in score.get('badges')]

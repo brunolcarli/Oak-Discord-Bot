@@ -153,6 +153,7 @@ class Query:
                 wins
                 losses
                 badges
+                standby
               }}
             }}
           }}
@@ -180,6 +181,7 @@ class Query:
                 wins
                 losses
                 badges
+                standby
                 battles(last: 1){{
                   edges{{
                     node{{
