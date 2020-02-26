@@ -199,3 +199,28 @@ class Query:
         }}
         """
         return gql(query)
+
+    @staticmethod
+    def get_standby_trainers(league_id):
+        query = f'''
+        query scores {{
+          scores(league_Id_In:  "{league_id}"){{
+            edges{{
+              node{{
+                trainer{{
+                  discordId
+                }}
+                battles(last: 1){{
+                  edges{{
+                    node{{
+                      battleDatetime
+                    }}
+                  }}
+                }}
+                standby
+                }}
+              }}
+           }}
+        }}
+        '''
+        return gql(query)

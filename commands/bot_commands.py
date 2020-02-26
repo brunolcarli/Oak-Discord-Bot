@@ -50,6 +50,13 @@ from commands.mutations import Mutations
 
 client = commands.Bot(command_prefix='/')
 
+@client.command()
+async def ping(ctx):
+    """
+    Verifica se o bot está executando.
+    """
+    await ctx.send('pong')
+
 
 @client.event
 async def on_ready():
@@ -59,19 +66,10 @@ async def on_ready():
     """
     print("The bot is ready!")
 
-
-@client.command()
-async def ping(ctx):
-    """
-    Verifica se o bot está executando. Responde com "pong" caso positivo.
-    """
-    await ctx.send('pong')
-
-
 @client.command()
 async def quote(ctx, *phrase):
     """
-    Salva uma mensagem como quote para ser eternamente lembrado
+    Salva uma mensagem para ser eternamente lembrada
     """
     if phrase:
         quoted = ' '.join(word for word in phrase)
@@ -162,7 +160,7 @@ async def top_ranked(ctx, *args):
 @client.command(aliases=['trainer', 'trainer_ranked'])
 async def ranked_trainer(ctx, *trainer_nickname):
     """
-    Busca o score de um trainer na ranked pelo nick do caboclo.
+    Score de um trainer na ranked pelo seu nick.
     """
     if not trainer_nickname:
         await ctx.send('Forneça um nick\nUso: `/ranked_trainer <nickname>`')
@@ -231,7 +229,7 @@ async def ranked_elo(ctx, *elo_arg):
 @client.command(aliases=['valid', 'rv'])
 async def ranked_validate(ctx):
     """
-    Valida as entradas pendentes do formulário de registro de batalhas
+    Valida pendências do formulário de batalhas
     """
     if ctx.message.channel.name == ADMIN_CHANNEL:
 
@@ -307,7 +305,7 @@ async def ranked_validate(ctx):
 @client.command(aliases=['db', 'bd', 'abp-db', 'trainer_db', 'trainer_names'])
 async def abp_db(ctx, *trainer_arg):
     """
-    Retorna todos os treinadores que estão cadastrados na ABP.
+    Treinadores cadastrados no sistema 1.0 da ABP.
     """
     if trainer_arg:
         trainer_nickname = ' '.join(word for word in trainer_arg)
@@ -459,7 +457,7 @@ async def view_leagues(bot, league_id=None):
 @client.command(aliases=['vt', 't', 'trainers'])
 async def view_trainers(bot, discord_id=None):
     """
-    Visualiza dados de treiandores cadastrados
+    Treiandores cadastrados no sistema 2.0 da ABP
 
     Exemplo de uso, ver listagem de treinadores:
         /view_trainers
@@ -641,7 +639,7 @@ async def view_leaders(bot, discord_id=None):
 @client.command(aliases=['nt'])
 async def new_trainer(bot, discord_id=None):
     """
-    Solicita a criação de um novo treinador ao banco de dados.
+    Cadastra novo treinador no sistema 2.0 da ABP.
 
     Exemplo de uso:
         /nt @Username
@@ -721,7 +719,7 @@ async def new_trainer(bot, discord_id=None):
 @client.command(aliases=['nliga', 'cliga'])
 async def new_league(bot, *reference):
     """
-    Envia uma requisição solicitando a criação de uma nova liga.
+    Cadastra uma nova liga no sistema 2.0 da ABP.
 
     Exemplo de uso:
         /new_league Liga 2089 Pokemon Galaxy & Universe
@@ -783,7 +781,7 @@ async def new_league(bot, *reference):
 @client.command(aliases=['nl'])
 async def new_leader(bot, *args):
     """
-    Envia uma requisição solicitando a criação de um novo líder.
+    Cadastra um líder no sistema 2.0 da ABP
 
     Exemplo de uso:
         /new_leader @Username fire elite_four
@@ -902,7 +900,8 @@ async def new_leader(bot, *args):
 @client.command(aliases=['lr', 'registro_liga', 'rl'])
 async def league_register(bot, *args):
     """
-    Solicita a API a inscrição de um jogador em uma liga pokemon.
+    Registra um treinador/lider em uma liga
+
     Deve-se fornecer um parâmetro informando se o jogador é um treinador
     que irá competir na liga ou um líder que irá defender a liga.
     Params:
@@ -1001,7 +1000,7 @@ async def league_register(bot, *args):
 @client.command(aliases=['br', 'new_battle', 'battle', 'rb'])
 async def battle_register(bot, *args):
     """
-    Registra uma batalha entre um treinador e um líder
+    Registra uma batalha da liga
 
     Exemplo de uso:
         /battle_register liga1 @trainer @leader @winner
@@ -1511,7 +1510,7 @@ async def scores(bot, league_id=None):
 @client.command(aliases=['tscore', 'ts', 'placar'])
 async def trainer_score(bot, discord_id=None, league=None):
     """
-    Informa o placar de um jogador em uma liga
+    Informa o placar de um treinador em uma liga
 
     Exemplo de uso:
        /ts @username liga1
@@ -1598,3 +1597,63 @@ async def trainer_score(bot, discord_id=None, league=None):
 
     msg = f'Placar de {discord_id} na {league}:'
     return await bot.send(msg, embed=embed)
+
+
+@client.command(aliases=['sbt', 'st', 'standby', 'molho', 'stdby'])
+async def standby_trainers(bot, league_id=None):
+    """
+    Verifica os treinadores de molho em uma liga
+
+    Exemplo de uso:
+        /standby_trainers liga1
+
+    Aliases:
+        sbt
+        st
+        standby
+        molho
+        stdby
+    """
+    if not league_id:
+        return await bot.send('Preciso que informe uma liga!')
+
+    # faz a hash da liga
+    try:
+        _, int_id = league_id.lower().split('liga')
+    except Exception:
+        return await bot.send('ID inválido!')  # TODO retornar Oak error
+
+    # Garante que o id é realmente integer
+    if not int_id.isdigit():
+        return await bot.send('ID inválido!')  # TODO retornar Oak error
+
+    league_hash = b64encode(f'LeagueType:{int_id}'.encode('utf-8')).decode('utf-8')
+    payload = Query.get_standby_trainers(league_hash)
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+
+    scores = response['scores']['edges']
+    if not scores:
+        return await bot.send('Não há registros desta liga ainda!')  # TODO retornar Oak error
+
+    standby_trainers = [t for t in scores if t['node'].get('standby') is True]
+    if not standby_trainers:
+        return await bot.send('Não há treinadores de molho nesta liga!')
+
+    embed = discord.Embed(color=0x1E1E1E, type='rich')
+    embed.set_thumbnail(url='http://bit.ly/abp_logo')
+
+    for score in standby_trainers:
+        trainer = score['node']['trainer'].get('discordId', '?')
+        last_battle = score['node']['battles']['edges'][0].get('node')
+        battle_datetime = parser.parse(last_battle.get('battleDatetime')).strftime('%d/%m/%Y')
+
+        body = f'{trainer} | **Última Batalha**: `{battle_datetime}`'
+
+        embed.add_field(name='Treinador', value=body, inline=False)
+
+    return await bot.send(f'Treinadores de molho na {league_id}', embed=embed)
