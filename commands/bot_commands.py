@@ -721,6 +721,12 @@ async def new_trainer(bot, discord_id=None):
     trainer = response['createTrainer'].get('trainer')
     join_date = parser.parse(trainer.get('joinDate')).strftime('%d/%m/%Y')
 
+    # busca o role de Treinador da Liga e adiciona ao membro caso ainda não o tenha
+    trainer_role = [r for r in bot.guild.roles if r.name == 'Treinador da Liga']
+    if trainer_role:
+        if trainer_role[0] not in guild_member.roles:
+            await guild_member.add_roles(trainer_role[0])
+
     # retorna usuario registrado
     embed.set_thumbnail(url=guild_member.avatar_url._url)
     description = 'Bem vindo Vindo a liga ABP.\nAqui está seu Trainer Card:'
