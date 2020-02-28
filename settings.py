@@ -6,6 +6,7 @@ from decouple import config
 
 TOKEN = config('TOKEN')
 ADMIN_CHANNEL = config('ADMIN_CHANNEL')
+GENERAL_CHANNEL = config('GENERAL_CHANNEL')
 
 POKE_API_URL = 'https://pokeapi.co/api/v2/pokemon/'
 ITEM_API_URL = 'https://pokeapi.co/api/v2/item/'

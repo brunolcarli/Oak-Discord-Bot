@@ -5,7 +5,6 @@ o processamento destas funções devem estar em um outro módulo dedicado e
 importá-lo neste escopo, deixando este módulo o mais limpo possível e
 facilitando a identificação e manutenção dos comandos.
 """
-
 # std libs
 from base64 import b64decode, b64encode
 from ast import literal_eval
@@ -23,7 +22,7 @@ import discord
 from discord.ext import commands
 
 # settings constants
-from settings import (BACKEND_URL, SCORE_INDEX, ADMIN_CHANNEL,
+from settings import (BACKEND_URL, SCORE_INDEX, ADMIN_CHANNEL, GENERAL_CHANNEL,
                       COLOR_INDEX, ELO_IMG_INDEX, BILL_API_URL)
 
 # general tools
@@ -48,7 +47,31 @@ from util.oak_errors import CommandErrors
 from commands.queries import Query
 from commands.mutations import Mutations
 
+
 client = commands.Bot(command_prefix='/')
+
+
+@client.event
+async def on_member_join(member):
+    """
+    Mensagem de boas vindas e orientacão para um membro recém chegado.
+    """
+    embed = discord.Embed(color=0x1E1E1E, type='rich')
+    embed.set_thumbnail(url='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRejczcPLNHPb4_UAPOEj9jpi3irx7o35Wkk11DQXpOKVI39ENPIg')
+    embed.set_image(url='https://1.bp.blogspot.com/-TrkZDgOPMeI/U37EqMozpWI/AAAAAAAAAdA/qSId14L5zsM/s1600/Professor_Oak_BW.png')
+    text = f'Olá {member.mention}, bem vindo/a ao mundo pokémon!\n'\
+           f'Você é menino ou menina?\n...\nBem isso não importa. '\
+           f'Este é o servidor da Arena de Batalhas Pokémon, como você chegou '\
+           f'agora pode se registrar com o comando: \n\n'\
+           f'``` /nt @SuaTagDiscord ``` \nSe precisar de algo a mais basta digitar\n'\
+           f'``` /help ``` \n'
+    embed.add_field(name='Bem Vindo', value=text, inline=False)
+
+    # busca o canal de chat geral da ABP
+    channel = client.get_channel(GENERAL_CHANNEL)
+    await channel.send('...', embed=embed)
+    return
+
 
 @client.command()
 async def ping(ctx):
@@ -58,7 +81,7 @@ async def ping(ctx):
     await ctx.send('pong')
 
 
-@client.event
+# @client.event
 async def on_ready():
     """
     Imprime uma mensagem no console informando que o bot, a princípio executou
@@ -673,7 +696,7 @@ async def new_trainer(bot, discord_id=None):
     guild_member = next(
         iter(
             [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
-            ),
+        ),
         None  # default
     )
     if not guild_member:
