@@ -81,7 +81,7 @@ async def ping(ctx):
     await ctx.send('pong')
 
 
-# @client.event
+@client.event
 async def on_ready():
     """
     Imprime uma mensagem no console informando que o bot, a princípio executou
