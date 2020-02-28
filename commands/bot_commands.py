@@ -1494,7 +1494,7 @@ async def scores(bot, league_id=None):
         lv = score['node']['trainer'].get('lv', '?')
         wins = score['node'].get('wins', '?')
         losses = score['node'].get('losses', '?')
-        badges = score['node'].get('badges', '?')
+        badges = score['node'].get('badges', '0')
         standby = score['node'].get('standby')
         standby = ':exclamation:' if standby else ':white_check_mark:'
 
@@ -1576,6 +1576,7 @@ async def trainer_score(bot, discord_id=None, league=None):
     # insignas conquistadas
     badge_list = [get_badge_icon(badge) for badge in score.get('badges')]
     badges = ' '.join(get_emoji(bot, name) for name in badge_list)
+    badges = badges or 'Sem insígnias'
 
     # última batalha do treinador
     have_battles = score['battles'].get('edges')
