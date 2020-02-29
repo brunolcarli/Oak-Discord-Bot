@@ -68,9 +68,9 @@ async def on_member_join(member):
     embed.add_field(name='Bem Vindo', value=text, inline=False)
 
     # busca o canal de chat geral da ABP
-    channel = client.get_channel(GENERAL_CHANNEL)
-    await channel.send('...', embed=embed)
-    return
+    channel = client.get_channel(int(GENERAL_CHANNEL))
+    if channel:
+        return await channel.send('...', embed=embed)
 
 
 @client.command()
