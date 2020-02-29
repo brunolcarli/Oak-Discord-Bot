@@ -6,7 +6,7 @@
 
 [![Wiki badge](https://badgen.net/badge/docs/github_wiki?icon=github)](https://github.com/brunolcarli/Oak-Discord-Bot/wiki)
 [![Discord invite](https://badgen.net/badge/icon/discord?icon=discord&label)](![](https://badgen.net/badge/icon/discord?icon=discord&label))
-![Generic badge](https://img.shields.io/badge/version-0.0.4-green.svg)
+![Generic badge](https://img.shields.io/badge/version-0.1.0-green.svg)
 
 PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
 
