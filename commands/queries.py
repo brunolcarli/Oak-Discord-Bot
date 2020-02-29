@@ -224,3 +224,15 @@ class Query:
         }}
         '''
         return gql(query)
+
+    @staticmethod
+    def get_version():
+      """
+      Consulta a versão da API Bill
+      """
+      query = f'''
+      query{{
+        apiVersion
+      }}
+      '''
+      return gql(query)

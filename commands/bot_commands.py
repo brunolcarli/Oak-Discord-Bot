@@ -23,7 +23,7 @@ from discord.ext import commands
 
 # settings constants
 from settings import (BACKEND_URL, SCORE_INDEX, ADMIN_CHANNEL, GENERAL_CHANNEL,
-                      COLOR_INDEX, ELO_IMG_INDEX, BILL_API_URL)
+                      COLOR_INDEX, ELO_IMG_INDEX, BILL_API_URL, __version__)
 
 # general tools
 from util.showdown_battle import load_battle_replay
@@ -1250,7 +1250,7 @@ async def update_trainer(bot, discord_id=None, *tokens):
     guild_member = next(
         iter(
             [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
-            ),
+        ),
         None  # default
     )
     if not guild_member:
@@ -1687,3 +1687,25 @@ async def standby_trainers(bot, league_id=None):
         embed.add_field(name='Treinador', value=body, inline=False)
 
     return await bot.send(f'Treinadores de molho na {league_id}', embed=embed)
+
+
+@client.command(aliases=['v'])
+async def version(bot):
+    """
+    Retorna a versão dos componentes do sistema ABP
+    """
+    payload = Query.get_version()
+    client = get_gql_client(BILL_API_URL)
+
+    try:
+        response = client.execute(payload)
+    except Exception as err:
+        stdout.write(f'Erro: {str(err)}\n\n')
+        return await bot.send(
+            'Desculpe não pude realizar esta operação. tente novamente mais tarde!'
+        )
+
+    bill_version = response.get('apiVersion', '?')
+    message = f'Versão do sistema ABP:\n\n'\
+              f'``` Bill API: {bill_version}\n Oak: {__version__} ``` \n\n'
+    return await bot.send(message)
