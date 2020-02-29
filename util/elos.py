@@ -6,7 +6,7 @@ from enum import Enum
 
 
 ELOS_MAP = [
-    ["grand mestre", 0x303030, "http://bit.ly/2Zyf0fv"],
+    ["graomestre", 0x1E1E1E, "http://bit.ly/2Zyf0fv"],
     ["mestre", 0x80e891, "http://bit.ly/2ZNonYV"],
     ["diamante", 0x59d0e4, "http://bit.ly/34jdT2M"],
     ["platina", 0xd7d7d7, "http://bit.ly/32nmwHw"],
@@ -28,7 +28,7 @@ class Elos(Enum):
     platina = 4
     diamante = 5
     mestre = 6
-    grandmestre = 7
+    graomestre = 7
 
 
 def get_elo(elo_name):
@@ -36,7 +36,11 @@ def get_elo(elo_name):
     Retorna um o elo solicitado.
     """
 
-    return Elos[elo_name.lower().replace("á", "a")]
+    return Elos[get_elo_name(elo_name)]
+
+
+def get_elo_name(elo_name):
+    return elo_name.lower().replace("á", "a").replace("ã", "a").replace(" ", "")
 
 
 def validate_elo_battle(elo1, elo2):

@@ -3,14 +3,16 @@ Módulo para ferramentas genéricas.
 """
 import difflib
 import discord
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
 from discord.utils import get
 from tabulate import tabulate
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
-from settings import (RANKED_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX,
+from settings import (RANKED_SPREADSHEET_ID, TRAINER_DB_SPREADSHEET_ID, SCORE_INDEX, SD_NAME_INDEX,
                       COLOR_INDEX)
-from util.elos import ELOS_MAP
-
+from util.elos import (ELOS_MAP, get_elo_name)
+from random import randint
 
 def get_similar_pokemon(pokemon):
     """
@@ -39,7 +41,7 @@ def get_trainer_rank(pts):
     Platina 750 - 849
     Diamante 850 - 949
     Mestre 950- 999
-    Grand mestre 1000
+    Grão mestre 1000
     """
     pts = int(pts)
     if pts < 100:
@@ -57,7 +59,7 @@ def get_trainer_rank(pts):
     elif pts >= 950 and pts < 1000:
         rank = 'Mestre'
     elif pts >= 1000:
-        rank = 'Grande Mestre'
+        rank = 'Grão Mestre'
     return rank
 
 
@@ -112,10 +114,11 @@ def get_spreadsheet_data(spreadsheet_id, cell_range):
 
     return values
 
+
 def compare_insensitive(s1, s2):
     # TODO: improve it to ignore all special characters
-    s1 = s1.strip().lower().replace("á", "a")
-    s2 = s2.strip().lower().replace("á", "a")
+    s1 = s1.strip().lower().replace("á", "a").replace("ã", "a").replace(" ", "")
+    s2 = s2.strip().lower().replace("á", "a").replace("ã", "a").replace(" ", "")
 
     return s1 == s2
 
@@ -131,7 +134,7 @@ def get_embed_output(ranked_table, client):
     """
     rank_index = ranked_table[0].index("Rank")
     trainer1_elo_data = [item for item in ELOS_MAP \
-        if item[0] == ranked_table[1][rank_index].lower().replace("á", "a")][0]
+        if item[0] == get_elo_name(ranked_table[1][rank_index])][0]
 
     pts_size = len(str(ranked_table[1][4]))
 
@@ -139,7 +142,7 @@ def get_embed_output(ranked_table, client):
     embed.set_thumbnail(url="http://bit.ly/abp_logo")
 
     for i, trainer in enumerate(ranked_table[1:21], start=1):
-        elo = trainer[rank_index].lower().replace("á", "a")
+        elo = get_elo_name(trainer[rank_index])
         emoji = get(client.emojis, name=elo)
 
         title = "{0} {1}º - {2}".format(str(emoji), str(i), trainer[1])
@@ -219,6 +222,19 @@ def get_initial_ranked_table():
     ]
 
 
+def get_trainer_db_table():
+    """
+    Retorna uma lista contendo uma lista com as colunas a serem exibidas
+    dos trainadores ABP.
+
+    params : None :
+    return : <list> :
+    """
+    return [
+        ['Nick', 'Discord', 'Switch FC', 'Showdown'],
+    ]
+
+
 def find_trainer(trainer_nickname, data=None):
     """
     Procura por um treinador específico na tabela de treinadores da ranked.
@@ -243,3 +259,132 @@ def find_trainer(trainer_nickname, data=None):
             return trainer
 
     return None
+
+
+def find_db_trainer(trainer_nickname, data=None):
+    """
+    Procura por um treinador específico na tabela de treinadores da ABP.
+
+    param : trainer_nickname : <str>
+    param : data : <list> : param data default value : None
+
+    return : <list>
+    """
+    data = data if data is not None else get_trainer_database_spreadsheet()
+    for trainer in data:
+        comparer_values = [ trainer[0], trainer[1] ]
+        
+        for item in comparer_values:
+            trainer_found = compare_insensitive(item, trainer_nickname)
+            if trainer_found: 
+                return trainer
+    return None
+
+
+def get_trainer_database_spreadsheet():
+    """
+    Retorna os dados da planilha do banco de dados de treinadores da ABP.
+    """
+    data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Treinador-DB!B2:E255')
+    return data
+
+
+def get_discord_member(client, member_name):
+    for member in client.get_all_members():
+        member_tag = "{0.name}#{0.discriminator}".format(member)
+        comparer_values = [ member_tag, member.name, member.display_name ]
+
+        for item in comparer_values:
+            trainer_found = compare_insensitive(item, member_name)
+            if trainer_found: 
+                return member
+
+    return None
+
+
+def get_random_profile():
+    images = [
+        [ 0x00d269, 'https://discordapp.com/assets/dd4dbc0016779df1378e7812eabaa04d.png' ],
+        [ 0xff5b5b, 'https://discordapp.com/assets/1cbd08c76f8af6dddce02c5138971129.png' ],
+        [ 0x8080ff, 'https://discordapp.com/assets/6debd47ed13483642cf09e832ed0bc1b.png' ],
+        [ 0xffb900, 'https://discordapp.com/assets/0e291f67c9274a1abdddeb3fd919cbaa.png' ],
+        [ 0x939393, 'https://discordapp.com/assets/322c936a8c8be1b803cd94861bdfa868.png' ],
+        [ 0x790079, 'https://cdn.discordapp.com/avatars/309137383780253696/feb59404e29a6e034b8b99edeec85066.png?size=256' ]
+    ]
+
+    return images[randint(0, len(images)-1)]
+
+
+def get_value_or_default(data, pos=None, default_value = "-"):
+    try:
+        output = (data) if pos is None else data[pos]
+        output = (output) if len(output.strip()) > 0 else default_value
+        return output
+    except IndexError:
+        default_value
+
+
+def get_gql_client(url, auth=None):
+    """
+    Retorna um client de execução de requisições graphql para acesso ao Bill.
+    param : auth : <str> : hash de autorização.
+    """
+    if not auth:
+        transport = RequestsHTTPTransport(url=url, use_json=True)
+    else:
+        headers = {
+            'content-type': 'application/json',
+            'auth': '{}'.format(auth)
+        }
+        transport = RequestsHTTPTransport(
+            url=url,
+            use_json=True,
+            headers=headers
+    )
+
+    client = Client(transport=transport, fetch_schema_from_transport=False)
+    return client
+
+
+def get_badge_icon(badge_name):
+    """
+    Retorna a url da imagem contendo o ícone do tipo da insígnia designada.
+
+    param : badge_name : <str>
+
+    return : <str>
+    """
+
+    badges = {
+        'Fire': 'badge_fire',
+        'Water': 'badge_water',
+        'Grass': 'badge_grass',
+        'Steel': 'badge_steel',
+        'Rock': 'badge_rock',
+        'Psychic': 'badge_psychic',
+        'Poison': 'badge_poison',
+        'Normal': 'badge_normal',
+        'Ice': 'badge_ice',
+        'Ground': 'badge_ground',
+        'Ghost': 'badge_ghost',
+        'Flying': 'badge_flying',
+        'Fighting': 'badge_fighting',
+        'Fairy': 'badge_fairy',
+        'Electric': 'badge_electric',
+        'Dragon': 'badge_dragon',
+        'Dark': 'badge_dark',
+        'Bug': 'badge_bug'
+    }
+
+    return badges.get(badge_name)
+
+
+def get_emoji(bot, emoji_name):
+    """
+    retorna um emoji no do server pelo nome no formato que o bot precisa
+    para entregar o emoji na mensagem.
+    """
+    emoji_badge = ''.join(
+        f'<:{e.name}:{e.id}>' for e in bot.guild.emojis if e.name == emoji_name
+    )
+    return emoji_badge

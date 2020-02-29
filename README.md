@@ -4,11 +4,11 @@
 
 # ABP Oak Discord Bot
 
-[![Generic badge](https://img.shields.io/badge/docs-blue.svg)](https://github.com/brunolcarli/Oak-Discord-Bot/wiki)
+[![Wiki badge](https://badgen.net/badge/docs/github_wiki?icon=github)](https://github.com/brunolcarli/Oak-Discord-Bot/wiki)
+[![Discord invite](https://badgen.net/badge/icon/discord?icon=discord&label)](![](https://badgen.net/badge/icon/discord?icon=discord&label))
+![Generic badge](https://img.shields.io/badge/version-0.1.0-green.svg)
 
 PokeBot auxiliar da Arena de Batalhas Pokémon utilizado no Discord
-
-![Generic badge](https://img.shields.io/badge/version-0.0.1-green.svg)
 
 
 </td></tr></table>
@@ -29,6 +29,7 @@ Veja a [documentação](https://github.com/brunolcarli/Oak-Discord-Bot/wiki) par
 /help
 ```
 
+https://discordapp.com/api/oauth2/authorize?client_id=590673073087315968&permissions=18432&scope=bot
 
 # Desenvolvedores
 
@@ -55,13 +56,13 @@ Assim que tiver gerado seu `token` e dado acesso ao bot via página do Discord D
 TOKEN=dgyausgdhuisegfdyuesnciosbedtyfvdsvufsuydtfcgjksgfdytsd
 ```
 
-Alguns comandos são direcionados à API [Lisa](https://github.com/brunolcarli/Lisa) no backend para gravação permanente de dados.
+Alguns comandos são direcionados à API [Bill](https://github.com/brunolcarli/Bill) no backend para gravação permanente de dados.
 Neste caso é preciso que o server seja levantado e o host seja inserido no mesmo arquivo `.env`.
 
 Ex:
 
 ```
-LISA=http://localhost:8000
+BILL=http://localhost:3122/graphql/
 ```
 
 
