@@ -3,6 +3,8 @@ Módulo para ferramentas genéricas.
 """
 import difflib
 import discord
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
 from discord.utils import get
 from tabulate import tabulate
 from oauth2client.service_account import ServiceAccountCredentials
@@ -111,6 +113,7 @@ def get_spreadsheet_data(spreadsheet_id, cell_range):
     values = result.get('values', [])
 
     return values
+
 
 def compare_insensitive(s1, s2):
     # TODO: improve it to ignore all special characters
@@ -285,6 +288,7 @@ def get_trainer_database_spreadsheet():
     data = get_spreadsheet_data(RANKED_SPREADSHEET_ID, 'Treinador-DB!B2:E255')
     return data
 
+
 def get_discord_member(client, member_name):
     for member in client.get_all_members():
         member_tag = "{0.name}#{0.discriminator}".format(member)
@@ -296,6 +300,7 @@ def get_discord_member(client, member_name):
                 return member
 
     return None
+
 
 def get_random_profile():
     images = [
@@ -309,6 +314,7 @@ def get_random_profile():
 
     return images[randint(0, len(images)-1)]
 
+
 def get_value_or_default(data, pos=None, default_value = "-"):
     try:
         output = (data) if pos is None else data[pos]
@@ -316,3 +322,69 @@ def get_value_or_default(data, pos=None, default_value = "-"):
         return output
     except IndexError:
         default_value
+
+
+def get_gql_client(url, auth=None):
+    """
+    Retorna um client de execução de requisições graphql para acesso ao Bill.
+    param : auth : <str> : hash de autorização.
+    """
+    if not auth:
+        transport = RequestsHTTPTransport(url=url, use_json=True)
+    else:
+        headers = {
+            'content-type': 'application/json',
+            'auth': '{}'.format(auth)
+        }
+        transport = RequestsHTTPTransport(
+            url=url,
+            use_json=True,
+            headers=headers
+    )
+
+    client = Client(transport=transport, fetch_schema_from_transport=False)
+    return client
+
+
+def get_badge_icon(badge_name):
+    """
+    Retorna a url da imagem contendo o ícone do tipo da insígnia designada.
+
+    param : badge_name : <str>
+
+    return : <str>
+    """
+
+    badges = {
+        'Fire': 'badge_fire',
+        'Water': 'badge_water',
+        'Grass': 'badge_grass',
+        'Steel': 'badge_steel',
+        'Rock': 'badge_rock',
+        'Psychic': 'badge_psychic',
+        'Poison': 'badge_poison',
+        'Normal': 'badge_normal',
+        'Ice': 'badge_ice',
+        'Ground': 'badge_ground',
+        'Ghost': 'badge_ghost',
+        'Flying': 'badge_flying',
+        'Fighting': 'badge_fighting',
+        'Fairy': 'badge_fairy',
+        'Electric': 'badge_electric',
+        'Dragon': 'badge_dragon',
+        'Dark': 'badge_dark',
+        'Bug': 'badge_bug'
+    }
+
+    return badges.get(badge_name)
+
+
+def get_emoji(bot, emoji_name):
+    """
+    retorna um emoji no do server pelo nome no formato que o bot precisa
+    para entregar o emoji na mensagem.
+    """
+    emoji_badge = ''.join(
+        f'<:{e.name}:{e.id}>' for e in bot.guild.emojis if e.name == emoji_name
+    )
+    return emoji_badge
