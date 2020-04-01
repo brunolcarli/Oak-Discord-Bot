@@ -510,7 +510,6 @@ async def view_trainers(bot, discord_id=None):
             embed.add_field(name="Discord", value=discord_id, inline=True)
             embed.add_field(name="Lv", value=lv, inline=True)
             embed.add_field(name="Batalhas", value=battle_counter, inline=True)
-            embed.add_field(name='_', value='__', inline=False)
 
         description = 'Treinadores ABP'
         embed.set_thumbnail(url="http://bit.ly/abp_logo")
@@ -598,11 +597,12 @@ async def view_leaders(bot, discord_id=None):
             discord_id = leader.get('discordId', '?')
             lv = leader.get('lv', '?')
             fc = leader.get('fc', '?')
+            pkm_type = leader.get('pokemonType', '?')
 
-            embed.add_field(name="Discord", value=discord_id, inline=True)
+            embed.add_field(name="Discord", value=discord_id, inline=False)
             embed.add_field(name="Lv", value=lv, inline=True)
             embed.add_field(name="FC", value=fc, inline=True)
-            embed.add_field(name='_', value='__', inline=False)
+            embed.add_field(name="Tipo", value=pkm_type, inline=True)
 
         description = 'Líderes ABP'
         embed.set_thumbnail(url="http://bit.ly/abp_logo")
@@ -613,7 +613,7 @@ async def view_leaders(bot, discord_id=None):
     guild_member = next(
         iter(
             [member for member in bot.guild.members if member.id == int(discord_id[2:-1])]
-            ),
+        ),
         None  # default
     )
     if not guild_member:
@@ -941,7 +941,7 @@ async def league_register(bot, *args):
     Ex:
                 -t @Username liga1
 
-    Em caso de registro de líder:
+    Em caso de registro de líder (Somente ADM):
     Ex:
                 -l @Username liga1
 
@@ -950,21 +950,7 @@ async def league_register(bot, *args):
         rl
         lr
     """
-
     embed = discord.Embed(color=0x1E1E1E, type="rich")
-
-    # somente administradores podem registrar jogadores nas ligas
-    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
-
-    if not is_adm:
-        title = ':octagonal_sign:'
-        embed.add_field(
-            name='Pemissão negada',
-            value='Você não tem permissão para isso!',
-            inline=False
-        )
-        return await bot.send(title, embed=embed)
-
     if len(args) < 3:
         title = 'Parâmetros ausêntes :octagonal_sign:'
         example = 'Por favor forneça os parâmetros corretamente!\n'\
@@ -981,6 +967,24 @@ async def league_register(bot, *args):
         return await bot.send(title, embed=embed)
 
     option, discord_id, league, *_ = args
+
+    # verifica se é um comando válido
+    is_trainer_self_register = (
+        option == '-t'
+        and
+        discord_id == f'<@{bot.author.id}>'
+    )
+    is_adm = 'ADM' in [r.name for r in bot.author.roles]  # TODO fazer um wrapper
+    is_a_valid_command = is_trainer_self_register or is_adm
+
+    if not is_a_valid_command:
+        title = ':octagonal_sign:'
+        embed.add_field(
+            name='Pemissão negada',
+            value='Você não tem permissão para isso!',
+            inline=False
+        )
+        return await bot.send(title, embed=embed)
 
     # Tenta iniciar a sequência de fabricacnao da hash base64
     try:
